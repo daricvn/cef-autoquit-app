@@ -9,7 +9,17 @@ import {
   QLayout,
   QBtn,
   QIcon,
-  QSelect
+  QSelect,
+  QToggle,
+  QItemLabel,
+  QItemSection,
+  QItem,
+  QCheckbox,
+  QSlideTransition,
+  QTable,
+  QTh,
+  QTr,
+  QTd
   
 } from 'quasar'
 
@@ -19,7 +29,17 @@ Vue.use(Quasar, {
     QLayout,
     QBtn,
     QIcon,
-    QSelect
+    QSelect,
+    QToggle,
+    QItemLabel,
+    QItemSection,
+    QItem,
+    QCheckbox,
+    QSlideTransition,
+    QTable,
+    QTh,
+    QTr,
+    QTd
   },
   directives: {
   },
