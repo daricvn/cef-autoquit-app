@@ -22,7 +22,19 @@
                     <q-td auto-width>
                         <q-checkbox :disable="disabled" v-model="props.selected" />
                     </q-td>
-                    <q-td :props="props" v-for="col in table.columns" :key="col.name">{{ props.row[col.field] }}</q-td>
+                    <q-td :props="props" v-for="col in table.columns" :key="col.name">
+                        <div v-if="!col.type || col.type == columnType.Text">
+                            {{ props.row[col.field] }}
+                        </div>
+                        <div v-else-if="col.type==columnType.Button && col.presetData">
+                            <q-btn v-for="(item,bi) in col.presetData" :key="bi" :color="!!item.color?item.color:'primary'" :label="item.label" :disable="disabled" 
+                                @click="item.action? item.action(props.row):donothing()" />
+                        </div>
+                        <div v-else-if="col.type==columnType.RoundButton && col.presetData">
+                            <q-btn v-for="(item,bi) in col.presetData" size="11px" :key="bi" round :color="!!item.color?item.color:'primary'" :icon="item.label" :disable="disabled" 
+                            @click="item.action? item.action(props.row):donothing()" />
+                        </div>
+                    </q-td>
                 </q-tr>
             </template>
         </q-table>
@@ -31,33 +43,46 @@
 
 <script lang="ts">
 import {Vue, Component, Prop, InjectReactive} from 'vue-property-decorator'
-import { TableData } from '../models/TableData';
+import { TableData, ColumnType } from '../models/TableData';
+import { ScriptItem, ScriptType } from '../models/ScriptItem';
 
 @Component
 export default class ScriptTable extends Vue{
-    @Prop({ default: true, type: Boolean }) disabled: Boolean | undefined;
+    @Prop({ default: false, type: Boolean }) disabled: Boolean | undefined;
     @InjectReactive("lang") lang: any;
-    table: TableData | null = null;
+    table: TableData<ScriptItem> | null = null;
+    columnType= ColumnType;
 
     mounted() {
         this.table={
             selected:[],
             columns:[
-                { name:'order', label: this.lang && this.lang.order?this.lang.order:'Order', field:'order' },
+                { name:'index', label: this.lang && this.lang.order?this.lang.order:'Order', field:'index' },
                 { name:'type', label:this.lang && this.lang.type?this.lang.type:'Type', field:'type' },
                 { name:'input', label:this.lang && this.lang.input?this.lang.input:'Input', field:'input' },
-                { name:'time-offset', label:this.lang && this.lang.timeOffset?this.lang.timeOffset:'Time Offset', field:'timeOffset' }
+                { name:'time-offset', label:this.lang && this.lang.timeOffset?this.lang.timeOffset:'Time Offset', field:'timeOffset' },
+                { name:'action', label:this.lang && this.lang.timeOffset?this.lang.action:'Action', type: ColumnType.RoundButton, presetData:[ { label: 'edit', color:'primary', action: this.onEditClick }] }
             ],
             data:[
-                { order: 1, type: 2, input: 3, timeOffset: 4},
-                { order: 2, type: 2, input: 3, timeOffset: 4},
-                { order: 3, type: 2, input: 3, timeOffset: 4}
+                { index: 1, type: ScriptType.MOUSE_UP, input: 3, timeOffset: 4},
+                { index: 2, type: ScriptType.MOUSE_UP, input: 3, timeOffset: 4},
+                { index: 3, type: ScriptType.MOUSE_UP, input: 3, timeOffset: 4}
             ]
         };
     }
 
+    onEditClick(data: ScriptItem){
+    }
+    onDeleteClick(data: ScriptItem){
+
+    }
+
     get selectionType(){
         return this.disabled?'single':'multiple';
+    }
+
+    donothing(){
+
     }
 }
 </script>
