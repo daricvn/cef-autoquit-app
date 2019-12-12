@@ -26,6 +26,7 @@
 <script lang="ts">
 import { Vue, Component, InjectReactive } from 'vue-property-decorator'
 import ScriptTable from './ScriptTable.vue';
+import { State } from 'vuex-class';
 
 @Component({
     components:{
@@ -36,7 +37,7 @@ export default class ScriptPanel extends Vue{
     options: Array<String>=["","Option 1","Option 2","Option 3"];
     model: String | null = null;
     subProcess=[];
-    @InjectReactive("lang") ui: any;
+    @State("lang") ui: any;
     mounted(){
 
     }

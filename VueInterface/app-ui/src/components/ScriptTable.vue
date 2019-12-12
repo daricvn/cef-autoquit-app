@@ -45,11 +45,12 @@
 import {Vue, Component, Prop, InjectReactive} from 'vue-property-decorator'
 import { TableData, ColumnType } from '../models/TableData';
 import { ScriptItem, ScriptType } from '../models/ScriptItem';
+import { State } from 'vuex-class';
 
 @Component
 export default class ScriptTable extends Vue{
     @Prop({ default: false, type: Boolean }) disabled: Boolean | undefined;
-    @InjectReactive("lang") lang: any;
+    @State("lang") lang: any;
     table: TableData<ScriptItem> | null = null;
     columnType= ColumnType;
 

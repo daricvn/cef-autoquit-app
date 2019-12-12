@@ -19,8 +19,9 @@ import {
   QTable,
   QTh,
   QTr,
-  QTd
-  
+  QTd,
+  QSpinnerGears,
+  Dialog
 } from 'quasar'
 
 Vue.use(Quasar, {
@@ -39,10 +40,12 @@ Vue.use(Quasar, {
     QTable,
     QTh,
     QTr,
-    QTd
+    QTd,
+    QSpinnerGears
   },
   directives: {
   },
   plugins: {
+    Dialog
   }
  })
