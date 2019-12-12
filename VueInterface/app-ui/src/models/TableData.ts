@@ -14,6 +14,11 @@ export class TableColumn{
     sortable?: Boolean | undefined | null;
     type?: ColumnType;
     presetData?: any;
+    editable?: Boolean;
+    validator?: any;
+    errorMessage?: String;
+    min?: Number;
+    max?: Number;
 }
 
 export enum ColumnType{
@@ -22,11 +27,18 @@ export enum ColumnType{
     List,
     File,
     Button,
-    RoundButton
+    RoundButton,
+    Number
 }
 
 export class ColumnButton{
     label?: String;
     action?: any;
     color?: String;
+    icon?: String;
+}
+
+export class ColumnListItem{
+    text?: String;
+    value: String | undefined;
 }

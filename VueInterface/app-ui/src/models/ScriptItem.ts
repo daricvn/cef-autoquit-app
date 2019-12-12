@@ -5,6 +5,7 @@ export class ScriptItem{
     timeOffset?: Number;
     active?: Boolean;
     manipulateMode?: Boolean;
+    dirty?: Boolean;
 }
 
 export enum ScriptType{

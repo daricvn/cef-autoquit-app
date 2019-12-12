@@ -21,6 +21,11 @@
             </q-slide-transition>
             <script-table />
         </div>
+        <div class="row q-mt-md justify-end text-right">
+            <q-btn class="q-mr-sm" color="blue" icon="save">{{ ui ? ui.open:'Open'}}</q-btn>
+            <q-btn class="q-mr-sm" color="green" icon="save" :disable="!script || script.length==0">{{ ui ? ui.save : 'Save'}}</q-btn>
+            <q-btn color="teal" icon="save_alt"  :disable="!script || script.length==0">{{ ui ? ui.saveas : 'Save As'}}</q-btn>
+        </div>
     </div>
 </template>
 <script lang="ts">
@@ -38,6 +43,7 @@ export default class ScriptPanel extends Vue{
     model: String | null = null;
     subProcess=[];
     @State("lang") ui: any;
+    @State("script") script: any;
     mounted(){
 
     }

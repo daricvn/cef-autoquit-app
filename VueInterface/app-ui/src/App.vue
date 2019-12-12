@@ -54,7 +54,8 @@ export default class App extends Vue {
         message: 'Unable to load app settings. This session will be terminated.',
         persistent: true
       }).onDismiss(()=>{
-        this.brokenApp=true;
+        // this.brokenApp=true;
+        this.setLoadState(false);
       });
     });
   }

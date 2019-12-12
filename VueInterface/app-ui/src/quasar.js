@@ -21,6 +21,8 @@ import {
   QTr,
   QTd,
   QSpinnerGears,
+  QTooltip,
+  QInput,
   Dialog
 } from 'quasar'
 
@@ -41,6 +43,8 @@ Vue.use(Quasar, {
     QTh,
     QTr,
     QTd,
+    QInput,
+    QTooltip,
     QSpinnerGears
   },
   directives: {

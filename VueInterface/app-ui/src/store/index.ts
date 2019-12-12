@@ -8,7 +8,8 @@ export default new Vuex.Store({
   state: {
     darkTheme: false,
     loadState: false,
-    lang: {}
+    lang: undefined,
+    script: []
   },
   mutations: {
     setDarkTheme(state, value){
@@ -20,6 +21,9 @@ export default new Vuex.Store({
     },
     setLang(state, lang){
       state.lang=lang;
+    },
+    setScript(state, value){
+      state.script=value;
     }
   },
   actions: {
