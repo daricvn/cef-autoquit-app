@@ -12,7 +12,7 @@ namespace HttpService.Interfaces
     public interface IResponse
     {
         int Status { get; set; }
-        dynamic Data { get; set; }
+        object Data { get; set; }
     }
     
 }

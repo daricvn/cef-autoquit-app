@@ -72,6 +72,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Controller\AppController.cs" />
     <Compile Include="Master.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -110,6 +111,10 @@
     <ProjectReference Include="..\CefCore\CefCore.csproj">
       <Project>{544af142-9cde-45af-ba83-bc93853a82eb}</Project>
       <Name>CefCore</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\HttpService\HttpService.csproj">
+      <Project>{3499d02a-275a-4094-9dff-3dacd3be66d5}</Project>
+      <Name>HttpService</Name>
     </ProjectReference>
     <ProjectReference Include="..\WinAPI\WinAPI.csproj">
       <Project>{1b494a2b-4107-47e6-80d8-c5311baa54f8}</Project>

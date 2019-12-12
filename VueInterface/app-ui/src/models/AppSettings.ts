@@ -11,5 +11,5 @@ export class KeyCombination{
     ctrlKey?: Boolean;
     altKey?: Boolean;
     shiftKey?: Boolean;
-    key?: Boolean;
+    key?: String;
 }
