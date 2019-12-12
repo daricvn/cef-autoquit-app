@@ -4,9 +4,9 @@ import { AppSettings } from '@/models/AppSettings';
 
 export default class AppService{
     static getSettings(): AxiosPromise<any> {
-        return axios.get(`${config.HOST}/config`);
+        return axios.get(`${config.URL}/config`);
     }
     static saveSettings(settings: AppSettings): AxiosPromise<any> {
-        return axios.post(`${config.HOST}/config`, settings);
+        return axios.post(`${config.URL}/config`, settings);
     }
 }
