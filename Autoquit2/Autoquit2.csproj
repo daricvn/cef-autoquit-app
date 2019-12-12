@@ -107,10 +107,6 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\vRoost\vieRoost\HttpService\HttpService.csproj">
-      <Project>{3499d02a-275a-4094-9dff-3dacd3be66d5}</Project>
-      <Name>HttpService</Name>
-    </ProjectReference>
     <ProjectReference Include="..\CefCore\CefCore.csproj">
       <Project>{544af142-9cde-45af-ba83-bc93853a82eb}</Project>
       <Name>CefCore</Name>

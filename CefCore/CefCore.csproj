@@ -78,7 +78,7 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\vRoost\vieRoost\HttpService\HttpService.csproj">
+    <ProjectReference Include="..\HttpService\HttpService.csproj">
       <Project>{3499d02a-275a-4094-9dff-3dacd3be66d5}</Project>
       <Name>HttpService</Name>
     </ProjectReference>
