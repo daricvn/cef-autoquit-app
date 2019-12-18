@@ -5,6 +5,7 @@ export class AppSettings{
     topHotkey?: KeyCombination;
     typeSpeed?: Number;
     language?: String;
+    version?: string = "2.0.0";
 }
 
 export class KeyCombination{

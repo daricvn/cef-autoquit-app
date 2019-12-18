@@ -1,17 +1,29 @@
 import Vue from 'vue';
 import Vuex from 'vuex';
 import {Dark} from 'quasar';
+import { AppSettings } from '@/models/AppSettings';
 
 Vue.use(Vuex);
 
 export default new Vuex.Store({
   state: {
+    settings: new AppSettings(),
     darkTheme: false,
     loadState: false,
     lang: undefined,
-    script: []
+    script: [],
+    filePath: '',
+    player:{
+      play: false,
+      record: false,
+      speed: 1,
+      count: -1
+    }
   },
   mutations: {
+    setSettings(state, settings){
+      state.settings = settings;
+    },
     setDarkTheme(state, value){
       state.darkTheme=value;
       Dark.set(value);
@@ -24,6 +36,15 @@ export default new Vuex.Store({
     },
     setScript(state, value){
       state.script=value;
+    },
+    setPlayerState(state, playerState){
+      state.player.play= playerState.play;
+      state.player.record= playerState.record;
+      state.player.speed=playerState.speed;
+      state.player.count=playerState.count;
+    },
+    setPath(state, filePath){
+      state.filePath=filePath;
     }
   },
   actions: {

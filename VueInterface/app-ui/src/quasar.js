@@ -23,7 +23,18 @@ import {
   QSpinnerGears,
   QTooltip,
   QInput,
-  Dialog
+  Dialog,
+  Ripple,
+  QTab,
+  QTabs,
+  QRouteTab,
+  QTabPanel,
+  QTabPanels,
+  QSeparator,
+  QImg,
+  QSlider,
+  Notify,
+  Loading
 } from 'quasar'
 
 Vue.use(Quasar, {
@@ -45,11 +56,22 @@ Vue.use(Quasar, {
     QTd,
     QInput,
     QTooltip,
-    QSpinnerGears
+    QSpinnerGears,
+    QTab,
+    QTabs,
+    QRouteTab,
+    QTabPanel,
+    QTabPanels,
+    QSeparator,
+    QSlider,
+    QImg
   },
   directives: {
+    Ripple
   },
   plugins: {
-    Dialog
+    Dialog,
+    Loading,
+    Notify
   }
  })

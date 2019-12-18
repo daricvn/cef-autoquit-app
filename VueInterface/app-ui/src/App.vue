@@ -1,16 +1,18 @@
 <template>
   <q-layout>
-    <div class="row" v-show="!brokenApp">
+    <div class="row" v-show="!brokenApp" style="height: 100vh; width: 100vw; overflow-x: hidden;">
       <div class="col-7">
         <script-panel></script-panel>
       </div>
-      <div class="col-5"></div>
+      <div class="col-5">
+        <control-panel />
+      </div>
     </div>
     <transition name="open-effect" appear>
-      <div class="overlay-loader" v-if="!!isLoading">
+      <div class="overlay-loader" v-if="!!isLoading" v-ripple:white>
         <div class="row justify-center flex-center full-height">
           <q-spinner-gears
-            color="blue-6"
+            color="blue-4"
             size="12em"
             thickness="9"
           />
@@ -27,10 +29,12 @@ import { State, Mutation } from 'vuex-class';
 import AppService from './services/AppService';
 import { AppSettings } from './models/AppSettings';
 import {Dialog} from 'quasar';
+import ControlPanel from './components/ControlPanel.vue';
 
 @Component({
   components:{
-    ScriptPanel
+    ScriptPanel,
+    ControlPanel
   }
 })
 export default class App extends Vue {
@@ -40,7 +44,6 @@ export default class App extends Vue {
   @Mutation('setDarkTheme') setDarkTheme: any;
   @Mutation('setLoadState') setLoadState: any;
   brokenApp: Boolean = false;
-
   mounted(){
     this.setLoadState(true);
     AppService.getSettings().then((response)=>{
@@ -81,6 +84,25 @@ export default class App extends Vue {
   }
   .open-effect-leave, .open-effect-enter-to{
     transform: scaleY(1);
+    opacity: 1;
+  }
+  div.tooltip-wrapper{
+    display: inline-block;
+  }
+
+  .slide-left-enter-active, .slide-left-leave-active{
+    transition: ease 0.3s all;
+  }
+  .slide-left-enter{
+    transform: translateX(100px);
+    opacity: 0;
+  }
+  .slide-left-leave-to{
+    transform: translateX(-100px);
+    opacity: 0;
+  }
+  .slide-left-enter-to, .slide-left-leave{
+    transform: translateX(0);
     opacity: 1;
   }
 </style>

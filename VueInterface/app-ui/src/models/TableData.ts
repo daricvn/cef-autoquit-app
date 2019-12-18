@@ -19,6 +19,7 @@ export class TableColumn{
     errorMessage?: String;
     min?: Number;
     max?: Number;
+    visible?: Boolean;
 }
 
 export enum ColumnType{

@@ -9,4 +9,7 @@ export default class AppService{
     static saveSettings(settings: AppSettings): AxiosPromise<any> {
         return axios.post(`${config.URL}/config`, settings);
     }
+    static closeApp():AxiosPromise<any>{
+        return axios.put(`${config.URL}/force_exit`);
+    }
 }
