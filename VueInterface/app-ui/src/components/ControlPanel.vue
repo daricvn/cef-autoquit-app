@@ -64,6 +64,7 @@ import { State, Mutation } from "vuex-class";
 import { QSpinnerHourglass } from 'quasar';
 import ControlTab from './tabs/ControlTab.vue';
 import AboutTab from './tabs/AboutTab.vue';
+import AppService from '../services/AppService';
 
 @Component({
     components:{
@@ -95,6 +96,7 @@ export default class ControlPanel extends Vue {
           title: this.ui ? this.ui.confirm_exit:'Are you sure want to exit?'
       })
       .onOk(()=>{
+          let pending=0;
           if (this.playerState.record || this.playerState.play){
               this.$q.loading.show({
                   spinner: QSpinnerHourglass as any,
@@ -104,8 +106,18 @@ export default class ControlPanel extends Vue {
               this.playerState.play=false;
               this.playerState.record=false;
               this.setPlayerState(this.playerState);
+              pending=2000;
           }
-          setTimeout(()=> { this.$q.loading.hide(); },2000);
+          setTimeout(()=> { 
+            AppService.closeApp().then(()=>{
+                this.$q.loading.hide();
+            }).catch(()=>{
+                this.$q.loading.show({
+                    message: 'Closing pending...',
+                    sanitize: true
+                })
+            })
+          },pending);
       })
   }
   playScript(){
