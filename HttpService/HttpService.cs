@@ -1,5 +1,6 @@
 ﻿using HttpService.Interfaces;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -13,9 +14,8 @@ using System.Threading.Tasks;
 
 namespace HttpService
 {
-    public class HttpService
-    {
-        private static JsonSerializerSettings JsonSettings = new JsonSerializerSettings();
+    public class HttpService {
+        public static JsonSerializerSettings SerializerOptions { get; } = new JsonSerializerSettings();
         public static Dictionary<string, ControllerResult> Mapping { get; } = new Dictionary<string, ControllerResult>();
         public static HttpListener Server { get; } = new HttpListener();
         public static string Scheme { get; set; } = "http";
@@ -47,8 +47,9 @@ namespace HttpService
         {
             try
             {
-                JsonSettings.ReferenceLoopHandling = ReferenceLoopHandling.Ignore;
-                JsonSettings.NullValueHandling = NullValueHandling.Ignore;
+                SerializerOptions.ReferenceLoopHandling = ReferenceLoopHandling.Ignore;
+                SerializerOptions.NullValueHandling = NullValueHandling.Ignore;
+                SerializerOptions.ContractResolver = new CamelCasePropertyNamesContractResolver();
                 Server.Start();
                 Server.BeginGetContext(OnRequestReceived, Server);
             }
@@ -58,6 +59,8 @@ namespace HttpService
                     OnInitializationFailed.Invoke(Server, new EventArgs());
             }
         }
+
+
         public static void Close()
         {
             Server.Close();
@@ -188,7 +191,7 @@ namespace HttpService
                             if (IsBasicType(result.Data.GetType()))
                                 data = (result.Data.ToString());
                             else
-                                data = JsonConvert.SerializeObject(result.Data,JsonSettings);
+                                data = JsonConvert.SerializeObject(result.Data,SerializerOptions);
                             var bytes = Encoding.UTF8.GetBytes(data);
                             output.Write(bytes, 0, bytes.Length);
                         }

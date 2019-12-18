@@ -9,7 +9,7 @@ namespace Autoquit2.Models {
         public bool DarkTheme { get; set; }
         public KeyCombination PlayHotkey { get; set; }
         public KeyCombination RecordHotkey { get; set; }
-        public KeyCombination TppHotkey { get; set; }
+        public KeyCombination TopHotkey { get; set; }
         public int TypeSpeed { get; set; }
         public string Language { get; set; }
     }
