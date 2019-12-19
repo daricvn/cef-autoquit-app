@@ -20,7 +20,7 @@
             style="width: 100%;"
             table-style="max-height: 73vh; overflow-x: hidden;"
             :pagination.sync="pagination"
-            :virtual-scroll-slice-size="30"
+            :virtual-scroll-slice-size="40"
             :visible-columns="tableColumn"
             >
                 <template v-slot:body="props">
@@ -144,13 +144,7 @@ export default class ScriptTable extends Vue{
     }
 
     load(reload: boolean = false){
-        if (reload || !this.script)
-            setTimeout(()=>{
-                this.setTableData(this.randomSample);
-            },0);
-        else{
-            this.setTableData(this.script as ScriptItem[]);
-        }
+        this.setTableData(this.script as ScriptItem[]);
     }
 
     onTypeChanged(data: ScriptItem){
@@ -216,16 +210,17 @@ export default class ScriptTable extends Vue{
     }
 
     get typeList(){
-        // if (this.lang){
+        if (this.lang){
             let result=[];
             for (let key in Object.keys(ScriptType))
             {
+                console.log(ScriptType[key]);
                 if (key && ScriptType[key])
                     result.push({ label: this.lang && this.lang[ScriptType[key]] ? this.lang[ScriptType[key]]:ScriptType[key], value: +key  });
             }
             return result;
-        // }
-        // return [];
+         }
+         return [];
     }
 
     get tableColumn(){

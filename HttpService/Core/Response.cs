@@ -48,6 +48,11 @@ namespace HttpService.Core
                 return new Response<T>() { Status=400 };
             }
         }
+        public static Response<T> InternalError {
+            get {
+                return new Response<T>() { Status = 500 };
+            }
+        }
         public static Response<T> Unauthorized
         {
             get

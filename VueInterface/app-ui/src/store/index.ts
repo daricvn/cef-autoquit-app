@@ -17,7 +17,8 @@ export default new Vuex.Store({
       play: false,
       record: false,
       speed: 1,
-      count: -1
+      count: -1,
+      targetPid: []
     }
   },
   mutations: {
@@ -42,6 +43,7 @@ export default new Vuex.Store({
       state.player.record= playerState.record;
       state.player.speed=playerState.speed;
       state.player.count=playerState.count;
+      state.player.targetPid=playerState.targetPid;
     },
     setPath(state, filePath){
       state.filePath=filePath;

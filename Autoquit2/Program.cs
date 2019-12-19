@@ -9,9 +9,14 @@ namespace Autoquit2
 {
     static class Program
     {
+        private const string DEBUG_CONTENT = "../../../../VueInterface/app-ui/dist";
+        //===============================================
         private static string AppScheme = "daricapp";
         private static string AppName = "autoquit";
         private static string AppPort = "7709";
+
+        public static volatile bool ForceClose = false;
+        public static volatile bool Established = false;
         private static string Url
         {
             get
@@ -25,13 +30,17 @@ namespace Autoquit2
         [STAThread]
         static void Main()
         {
+            if ( System.Diagnostics.Debugger.IsAttached ) {
+                Chromium.UseLocalContent(DEBUG_CONTENT);
+            }
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             var assemblyPath = string.Join(".", typeof(Program).Namespace, "resources");
             var url = Url + "/index.html";
             Chromium.SetAssemblyResource(typeof(Program));
-            Chromium.InitializeCore(AppScheme, AppName, url, AppPort, assemblyPath);
+            Chromium.InitializeCore(AppScheme, AppName, url, AppPort, "Autoquit2", assemblyPath);
             Application.Run(new Master());
+            Chromium.Shutdown();
         }
     }
 }

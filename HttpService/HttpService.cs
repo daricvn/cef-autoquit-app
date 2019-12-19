@@ -82,6 +82,8 @@ namespace HttpService
             HttpListenerResponse response = context.Response;
             var output = response.OutputStream;
             var url = request.Url.AbsolutePath+"/";
+            if ( url.StartsWith("/") )
+                url = url.Substring(1);
             url = url.Replace("//", "/");
             if (!string.IsNullOrWhiteSpace(HttpService.Origin))
             {
@@ -98,7 +100,7 @@ namespace HttpService
                 var currentOrigin = request.Headers["Origin"];
                 if (string.IsNullOrEmpty(currentOrigin))
                     validRequest = false;
-                if (!AllowOrigin.ContainsKey(currentOrigin))
+                if ( currentOrigin==null || !AllowOrigin.ContainsKey(currentOrigin))
                 {
                     validRequest = false;
                 }
@@ -138,6 +140,7 @@ namespace HttpService
                             body = sr.ReadToEnd().TrimStart();
                         paramInfo = controller.target.GetType().GetMethod(controller.func).GetParameters();
                         if (body.StartsWith("{")) {
+                            parameters= new List<object>();
                             var dict = JsonConvert.DeserializeObject<Dictionary<string, object>>(body);
                             var obj = GetObject(dict, paramInfo);
                             if ( obj is List<object> )
@@ -146,6 +149,7 @@ namespace HttpService
                                 parameters.Add(obj);
                         }
                         else if (body.StartsWith("[") && body.Contains("]")) {
+                            parameters = new List<object>();
                             var dicts = JsonConvert.DeserializeObject<Dictionary<string, object>[]>(body);
                             var converted = false;
                             foreach ( var info in paramInfo )
@@ -177,10 +181,10 @@ namespace HttpService
                     var method = controller.target.GetType().GetMethod(controller.func);
                     if ( method.ReturnType != typeof(void) )
                         try {
-                            result = (IResponse)method.Invoke(controller.target, parameters.ToArray());
+                            result = (IResponse)method.Invoke(controller.target, parameters?.ToArray());
                         }
                         catch ( Exception e ) { }
-                    else method.Invoke(controller.target, parameters.ToArray());
+                    else method.Invoke(controller.target, parameters?.ToArray());
 
                     if (result != null)
                     {
@@ -218,7 +222,7 @@ namespace HttpService
             var keys = dict.Keys.ToList();
             List<string> convertedKeys = null;
             foreach ( var info in paramInfo )
-                if ( info.ParameterType.IsClass && info.ParameterType.IsPublic && !info.ParameterType.IsAbstract ) {
+                if (!IsBasicType(info.ParameterType) && info.ParameterType.IsClass && info.ParameterType.IsPublic && !info.ParameterType.IsAbstract ) {
                     var props = info.ParameterType.GetProperties();
                     if ( props != null ) {
                         var obj = Convert.ChangeType(Activator.CreateInstance(info.ParameterType), info.ParameterType);

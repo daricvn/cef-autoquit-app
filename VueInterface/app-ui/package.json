@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@quasar/extras": "^1.0.0",
+    "@types/lodash": "^4.14.149",
     "core-js": "^3.4.3",
     "lodash": "^4.17.15",
     "quasar": "^1.0.0",

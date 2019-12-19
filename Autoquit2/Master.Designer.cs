@@ -35,11 +35,13 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(873, 559);
+            this.ClientSize = new System.Drawing.Size(977, 586);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
+            this.MaximizeBox = false;
             this.Name = "Master";
-            this.Text = "Autoquit";
+            this.Text = "Autoquit2";
+            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.Master_FormClosing);
             this.Load += new System.EventHandler(this.Master_Load);
             this.ResumeLayout(false);
 

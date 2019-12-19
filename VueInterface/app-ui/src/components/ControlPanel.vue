@@ -21,8 +21,7 @@
             </q-tab-panel>
 
             <q-tab-panel name="settings" style="max-height: 55vh">
-                <div class="text-h6">Alarms</div>
-                Lorem ipsum dolor sit amet consectetur adipisicing elit.
+                <settings-tab />
             </q-tab-panel>
 
             <q-tab-panel name="about" style="max-height: 55vh">
@@ -33,7 +32,8 @@
         <div class="col-auto justify-end text-right q-pa-md">
             <div class="q-pt-sm q-pb-md q-pr-sm">
                 <div class="tooltip-wrapper">
-                    <q-btn size="40px" glossy round push :color="playerState.play?'grey':'green'"
+                    <q-btn size="38px" glossy round push :color="playerState.play?'grey':'green'"
+                        :disable="!playRecordAvailable"
                         @click="playScript">
                             <transition-group name="q-transition--rotate">
                                 <q-icon key="play_arrow" name="play_arrow" v-if="!playerState.play"></q-icon>
@@ -44,7 +44,8 @@
                 </div>
             </div>
             <div class="q-pt-sm">
-                <q-btn glossy rounded :color="playerState.record?'white':'red'" :class=" {'text-red': playerState.record }" @click="record">
+                <q-btn glossy rounded :color="playerState.record?'white':'red'" :class=" {'text-red': playerState.record }" @click="record"
+                :disable="!playRecordAvailable">
                     <q-icon size="28px" name="fiber_manual_record" class="on-left" :color="playerState.record?'red':'white'" :class="{'recording-indicator': playerState.record}"></q-icon>
                     <span :class="{'recording-indicator': playerState.record}">
                     {{ ui ? (playerState.record? ui.stoprecord : ui.record) : (playerState.record? 'Stop Record':'Record') }}
@@ -62,17 +63,21 @@
 import { Vue, Component } from "vue-property-decorator";
 import { State, Mutation } from "vuex-class";
 import { QSpinnerHourglass } from 'quasar';
+import SettingsTab from './tabs/SettingsTab.vue';
 import ControlTab from './tabs/ControlTab.vue';
 import AboutTab from './tabs/AboutTab.vue';
 import AppService from '../services/AppService';
+import _ from 'lodash';
 
 @Component({
     components:{
         ControlTab,
-        AboutTab
+        AboutTab,
+        SettingsTab
     }
 })
 export default class ControlPanel extends Vue {
+  isAsking = false;
   tab: string | undefined = "control";
   @State("player") playerState: any;
   @Mutation("setPlayerState") setPlayerState: any;
@@ -84,6 +89,8 @@ export default class ControlPanel extends Vue {
 
   close(){
       if (this.$q.loading.isActive) return;
+      if (this.isAsking) return;
+      this.isAsking=true;
       this.$q.dialog({
           cancel:{
               label:'No',
@@ -115,11 +122,28 @@ export default class ControlPanel extends Vue {
                 this.$q.loading.show({
                     message: 'Closing pending...',
                     sanitize: true
-                })
+                });
+                this.forceClose();
             })
           },pending);
       })
+      .onDismiss(()=>{
+          this.isAsking=false;
+      })
   }
+
+    private closeRetry=0;
+  private forceClose(){
+      this.closeRetry++;
+      _.debounce(()=>{
+          AppService.closeApp().then(()=>{
+                this.$q.loading.hide();
+            }).catch(()=>{
+                this.forceClose();
+            })
+      },2000);
+  }
+
   playScript(){
       this.playerState.play=!this.playerState.play;
   }
@@ -131,6 +155,10 @@ export default class ControlPanel extends Vue {
               { label: 'OK', color:'white'}
           ]
       })
+  }
+
+  get playRecordAvailable(){
+      return this.playerState.targetPid && this.playerState.targetPid.length>0;
   }
 }
 </script>

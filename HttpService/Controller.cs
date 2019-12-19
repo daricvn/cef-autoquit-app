@@ -35,7 +35,10 @@ namespace HttpService
                             func= method.Name,
                             target=this
                         });
-                        HttpService.Server.Prefixes.Add(HttpService.URI+url);
+                        if ( url.StartsWith("/") )
+                            url = url.Substring(1);
+                        var path = string.Join("/", HttpService.URI, url);
+                        HttpService.Server.Prefixes.Add(path);
                     }
                 }
                 catch (Exception e) { }

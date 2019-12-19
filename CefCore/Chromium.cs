@@ -28,7 +28,7 @@ namespace CefCore
         /// <param name="defaultUrl"></param>
         /// <param name="port"></param>
         /// <returns></returns>
-        public static ChromiumWebBrowser InitializeCore(string scheme, string host, string defaultUrl, string port, string assemblyPath=null)
+        public static ChromiumWebBrowser InitializeCore(string scheme, string host, string defaultUrl, string port, string controllerDomain, string assemblyPath=null)
         {
             if (_browser == null)
             {
@@ -36,30 +36,26 @@ namespace CefCore
                 {
                     SchemeRequestHandler.SchemeName = scheme;
                     SchemeRequestHandler.AssemblyPrefix = assemblyPath;
-                    HttpService.HttpService.Host = host;
+                    HttpService.HttpService.Host = "localhost";
                     HttpService.HttpService.Port = port;
-                    HttpService.HttpService.Scheme = scheme;
-                    HttpService.HttpService.Origin = HttpService.HttpService.URL;
+                    HttpService.HttpService.Origin = scheme+"://"+host;
                     if (!ExperimentalMode)
                     {
-                        HttpService.HttpService.SetOriginAllowance(HttpService.HttpService.URL);
-                        HttpService.HttpService.SetOriginAllowance(HttpService.HttpService.URL + "/");
+                        HttpService.HttpService.SetOriginAllowance(HttpService.HttpService.Origin);
+                        HttpService.HttpService.SetOriginAllowance(HttpService.HttpService.Origin + "/");
                     }
                     var settings = CreateSettings();
                     Cef.Initialize(settings);
 
-                    var controllers = Assembly.GetAssembly(typeof(Controller)).GetTypes().Where(x => x.IsClass && x.IsSubclassOf(typeof(Controller)));
-                    if (controllers != null && controllers.Count() > 0)
-                    {
-                        foreach (var ctl in controllers)
-                            if (!ctl.IsAbstract)
-                            {
-                                try
-                                {
+                    var controllers = AppDomain.CurrentDomain.GetAssemblies().FirstOrDefault(x=>x.FullName.StartsWith(controllerDomain))
+                        ?.GetTypes().Where(x => x.IsClass && x.IsSubclassOf(typeof(Controller)));
+                    if ( controllers != null && controllers.Count() > 0 ) {
+                        foreach ( var ctl in controllers )
+                            if ( !ctl.IsAbstract ) {
+                                try {
                                     Activator.CreateInstance(ctl);
                                 }
-                                catch (Exception ex)
-                                {
+                                catch ( Exception ex ) {
                                     Logger.Error("Error during bind controllers", ex);
                                 }
                             }
@@ -85,11 +81,23 @@ namespace CefCore
             AssemblyReader.TargetAssembly = t.Assembly;
         }
 
+        /// <summary>
+        /// Use local file content instead of assembly files.
+        /// </summary>
+        /// <param name="contentPath"></param>
+        public static void UseLocalContent(string contentPath ) {
+            SchemeRequestHandler.LocalPath = contentPath;
+        }
+
         public static ChromiumWebBrowser CreateBrowserNode(string defaultUrl = "chrome://version")
         {
             var browser = new ChromiumWebBrowser(defaultUrl);
-            //browser.MenuHandler = new ContextMenuHandler();
-            //browser.DragHandler = new DragHandler();
+            browser.BrowserSettings.ApplicationCache = CefState.Disabled;
+            browser.BrowserSettings.WindowlessFrameRate = 20;
+            // Disable menu
+            browser.MenuHandler = new ContextMenuHandler();
+            // Disable drag & drop
+            browser.DragHandler = new DragHandler();
             return browser;
         }
         public static void Invoke(ChromiumWebBrowser browser, string scriptName, params object[] parameters)
@@ -111,8 +119,32 @@ namespace CefCore
                 SchemeName = SchemeRequestHandler.SchemeName,
                 SchemeHandlerFactory = new SchemeRequestHandler()
             });
+            CefSharpSettings.WcfEnabled = false;
+            CefSharpSettings.SubprocessExitIfParentProcessClosed = true;
+            setting.CefCommandLineArgs.Remove("process-per-tab");
+            setting.CefCommandLineArgs.Add("enable-media-stream", "0");
+            setting.CefCommandLineArgs.Add("disable-gpu", "1");
+            setting.CefCommandLineArgs.Add("disable-plugins-discovery", "1");
+            setting.CefCommandLineArgs.Add("disable-gpu-vsync", "1");
+            setting.CefCommandLineArgs.Add("disable-extensions", "1");
+            setting.CefCommandLineArgs.Add("disable-flash-3d", "1");
+            setting.CefCommandLineArgs.Add("disable-speech-api", "1");
+
             return setting;
         }
-
+        /// <summary>
+        /// Set browser zoom scale by percent
+        /// </summary>
+        /// <param name="percent">Range from 0.25 to 5.0</param>
+        public static void SetZoomScale(this ChromiumWebBrowser browser, double percent ) {
+            if ( percent > 5 )
+                percent = 5;
+            if ( percent < 0.25 )
+                percent = 0.25;
+            var level = Math.Log(percent, 1.2);
+            if ( Double.IsNaN(level) )
+                level = 0;
+            browser.SetZoomLevel(level);
+        }
     }
 }

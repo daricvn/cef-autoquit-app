@@ -1,6 +1,6 @@
 <template>
   <q-layout>
-    <div class="row" v-show="!brokenApp" style="height: 100vh; width: 100vw; overflow-x: hidden;">
+    <div class="row" v-show="!brokenApp" style="height: 100vh; width: 100vw; overflow-x: hidden;" v-if="lang && lang['file-namespace']">
       <div class="col-7">
         <script-panel></script-panel>
       </div>
@@ -43,6 +43,7 @@ export default class App extends Vue {
   @State(state=>state.loadState) isLoading: any;
   @Mutation('setDarkTheme') setDarkTheme: any;
   @Mutation('setLoadState') setLoadState: any;
+  @Mutation('setLang') setLanguage: any;
   brokenApp: Boolean = false;
   mounted(){
     this.setLoadState(true);
@@ -50,17 +51,37 @@ export default class App extends Vue {
       let settings= response.data as AppSettings;
       if (!!settings){
         this.setDarkTheme(!!settings.darkTheme);
+        this.setLoadState(false);
+        AppService.getLanguage(settings.language+"").then((response)=>{
+          try{
+            let language= response.data;
+            this.setLanguage(language);
+            this.$forceUpdate();
+          }
+          catch (e){ console.log(e); }
+        }).catch(()=>{
+          this.appError('Unable to load app language', 'Unable to load app language. This session will be terminated.');
+        })
       }
     }).catch(err=>{
-      this.$q.dialog({
-        title: 'Unable to load app settings',
-        message: 'Unable to load app settings. This session will be terminated.',
+      this.appError('Unable to load app settings', 'Unable to load app settings. This session will be terminated.');
+    });
+
+    (window as any).appError=this.appError;
+  }
+
+  appError(title: string, message: string){
+    this.$q.dialog({
+        title,
+        message,
         persistent: true
       }).onDismiss(()=>{
-        // this.brokenApp=true;
+        this.brokenApp=true;
         this.setLoadState(false);
+        setTimeout(()=>{
+          AppService.closeApp();
+        },1000);
       });
-    });
   }
 }
 </script>
@@ -104,5 +125,11 @@ export default class App extends Vue {
   .slide-left-enter-to, .slide-left-leave{
     transform: translateX(0);
     opacity: 1;
+  }
+  .line-40{
+    line-height: 40px;
+  }
+  .line-30{
+    line-height: 30px;
   }
 </style>

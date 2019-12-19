@@ -13,11 +13,12 @@ namespace CefCore.Handler
     {
         public static string SchemeName = "https";
         public static string AssemblyPrefix = "";
+        public static string LocalPath = null;
 
         public IResourceHandler Create(IBrowser browser, IFrame frame, string schemeName, IRequest request)
         {
             var uri = new Uri(request.Url);
-            var fileName = uri.AbsolutePath.Replace(HttpService.HttpService.URI,"").Replace("/", "."); ;
+            var fileName = uri.AbsolutePath;
 
             if (string.IsNullOrEmpty(fileName))
             {
@@ -25,8 +26,18 @@ namespace CefCore.Handler
             }
             var fileExtension = Path.GetExtension(fileName);
 
-            var steam = AssemblyReader.GetResources(fileName, AssemblyPrefix);
-            return ResourceHandler.FromStream(steam, ResourceHandler.GetMimeType(fileExtension));
+            Stream stream;
+            if ( string.IsNullOrEmpty(LocalPath) ) {
+                fileName=fileName.Replace(HttpService.HttpService.URI, "").Replace("/", ".");
+                stream = AssemblyReader.GetResources(fileName, AssemblyPrefix);
+            }
+            else {
+                if ( fileName.StartsWith("/") )
+                    fileName = fileName.Substring(1);
+                var path = Path.Combine(LocalPath, fileName);
+                stream = new FileStream(path, FileMode.Open, FileAccess.Read);
+            }
+            return ResourceHandler.FromStream(stream, ResourceHandler.GetMimeType(fileExtension));
         }
     }
 }
