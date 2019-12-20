@@ -26,7 +26,7 @@
                 round
                 flat
                 icon="fas fa-external-link-alt"
-                @click.stop
+                @click.stop="bringTop"
                 :disable="!model"
               />
               <q-tooltip>{{ ui ? ui.bringtotop : 'Bring to top' }}</q-tooltip>
@@ -101,7 +101,7 @@
                 <q-icon name="folder"></q-icon>
             </template>
           <template v-slot:append>
-            <q-btn round dense flat color="primary" icon="search" @click="browse">
+            <q-btn round dense flat color="primary" icon="search" @click.stop="browse">
               <q-tooltip>{{ ui ? ui.open : 'Open' }}</q-tooltip>
             </q-btn>
             <q-btn
@@ -110,6 +110,7 @@
               flat
               icon="save_alt"
               color="green"
+              @click.stop
               :disable="!script || script.length==0"
             >
               <q-tooltip>{{ ui ? ui.saveas : 'Save as...'}}</q-tooltip>
@@ -149,6 +150,7 @@ export default class ScriptPanel extends Vue {
   @State("script") script: any;
   @State("player") playerState?: PlayerState;
   @Mutation("setPlayerState") setPlayerState: any;
+  @Mutation("setScript") setScript: any;
   @Mutation("setPath") setPath: any;
   mounted() {
     this.options.push({
@@ -248,9 +250,20 @@ export default class ScriptPanel extends Vue {
   browse(){
       ScriptService.browse().then((response)=>{
           if (response.data){
-              this.setPath( response.data );
+              this.setPath( response.data.path );
+              this.setScript(response.data.script.scripts);
           }
       })
+  }
+  bringTop(){
+      if (this.model && this.model.pid){
+          ScriptService.bringTop(this.model.pid)
+          .catch(()=>{
+              this.$q.dialog({
+                  title: this.ui ? this.ui.message_execute_failed : 'Cannot perform this operation.'
+              });
+          });
+      }
   }
 }
 </script>

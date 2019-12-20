@@ -60,7 +60,6 @@ namespace HttpService
             }
         }
 
-
         public static void Close()
         {
             Server.Close();

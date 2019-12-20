@@ -30,6 +30,7 @@ import AppService from './services/AppService';
 import { AppSettings } from './models/AppSettings';
 import {Dialog} from 'quasar';
 import ControlPanel from './components/ControlPanel.vue';
+import { config } from './environment/config';
 
 @Component({
   components:{
@@ -42,32 +43,55 @@ export default class App extends Vue {
   @State(state=>state.darkTheme) darkTheme: any;
   @State(state=>state.loadState) isLoading: any;
   @Mutation('setDarkTheme') setDarkTheme: any;
+  @Mutation('setSettings') setSettings: any;
   @Mutation('setLoadState') setLoadState: any;
   @Mutation('setLang') setLanguage: any;
   brokenApp: Boolean = false;
   mounted(){
     this.setLoadState(true);
-    AppService.getSettings().then((response)=>{
-      let settings= response.data as AppSettings;
-      if (!!settings){
-        this.setDarkTheme(!!settings.darkTheme);
-        this.setLoadState(false);
-        AppService.getLanguage(settings.language+"").then((response)=>{
+
+    (window as any).appError=this.appError;
+    (window as any).loadApp=this.loadApp;
+  }
+
+  loadApp(json: any){
+    const settings = json as AppSettings;
+    if (settings.port)
+      config.PORT = settings.port;
+    console.log(json);
+    console.log(settings);
+    this.setDarkTheme(!!settings.darkTheme);
+    this.setSettings(settings);
+    AppService.getLanguage(settings.language+"").then((response)=>{
           try{
             let language= response.data;
             this.setLanguage(language);
             this.$forceUpdate();
+            this.setLoadState(false);
           }
           catch (e){ console.log(e); }
         }).catch(()=>{
           this.appError('Unable to load app language', 'Unable to load app language. This session will be terminated.');
-        })
-      }
-    }).catch(err=>{
-      this.appError('Unable to load app settings', 'Unable to load app settings. This session will be terminated.');
-    });
-
-    (window as any).appError=this.appError;
+        });
+    // AppService.getSettings().then((response)=>{
+    //   let settings= response.data as AppSettings;
+    //   if (!!settings){
+    //     this.setDarkTheme(!!settings.darkTheme);
+    //     this.setLoadState(false);
+    //     AppService.getLanguage(settings.language+"").then((response)=>{
+    //       try{
+    //         let language= response.data;
+    //         this.setLanguage(language);
+    //         this.$forceUpdate();
+    //       }
+    //       catch (e){ console.log(e); }
+    //     }).catch(()=>{
+    //       this.appError('Unable to load app language', 'Unable to load app language. This session will be terminated.');
+    //     })
+    //   }
+    // }).catch(err=>{
+    //   this.appError('Unable to load app settings', 'Unable to load app settings. This session will be terminated.');
+    // });
   }
 
   appError(title: string, message: string){

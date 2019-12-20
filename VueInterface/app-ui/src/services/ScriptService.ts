@@ -13,4 +13,8 @@ export default class ScriptService{
     static browse():AxiosPromise<any>{
         return axios.get(`${config.URL}/script/browse`);
     }
+
+    static bringTop(pid: number): AxiosPromise<any>{
+        return axios.put(`${config.URL}/script/process/top?pid=${pid}`);
+    }
 }

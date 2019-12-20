@@ -29,7 +29,8 @@ export enum ColumnType{
     File,
     Button,
     RoundButton,
-    Number
+    Number,
+    Dynamic
 }
 
 export class ColumnButton{

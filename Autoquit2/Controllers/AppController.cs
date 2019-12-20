@@ -1,8 +1,11 @@
-﻿using Autoquit2.Models;
+﻿using Autoquit2._App_Data;
+using Autoquit2.Models;
+using Autoquit2.Services;
 using CefCore;
 using HttpService;
 using HttpService.Core;
 using HttpService.Interfaces;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -18,16 +21,20 @@ namespace Autoquit2.Controllers {
     {
         private static string LocalizationFolder {
             get {
-                return Path.Combine(Path.GetDirectoryName(Application.ExecutablePath), "localization");
+                return Path.Combine(Constant.AppPath, Constant.LOCALIZATION_FOLDER);
             }
         }
         [Get]
         public IResponse GetConfig() {
-            return Response.WithSuccess(new AppSettings());
+            return Response.WithSuccess(Settings.GetConfig());
         }
 
         [Post]
         public IResponse SaveConfig(AppSettings model) {
+            if (model != null ) {
+                var path = Path.Combine(Constant.AppPath, Constant.APP_SETTINGS_PATH);
+                File.WriteAllText(path, JsonConvert.SerializeObject(model));
+            }
             return Response.BadRequest;
         }
 
@@ -61,5 +68,6 @@ namespace Autoquit2.Controllers {
             Application.Exit();
             return Response.Success;
         }
+
     }
 }

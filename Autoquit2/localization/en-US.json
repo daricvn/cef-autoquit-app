@@ -71,13 +71,13 @@
 
   "MOUSE_UP": "Mouse up",
   "MOUSE_DOWN": "Mouse down",
-  "MOUSE_PRESS": "Mouse click",
+  "MOUSE_CLICK": "Mouse click",
   "KEY_UP": "Key up",
   "KEY_DOWN": "Key down",
   "KEY_PRESS": "Key press",
-  "ENTER_STRING": "Enter string",
+  "ENTER_TEXT": "Enter string",
   "ENTER_SECRET": "Enter secret",
-  "RANDOM_STRING": "Random string",
+  "RANDOM_TEXT": "Random string",
   "FROM_FILE": "From file...",
   "DO_NOTHING": "Do nothing",
 

@@ -25,24 +25,32 @@
             >
                 <template v-slot:body="props">
                     <transition name="slide-left" appear>
-                        <q-tr :props="props" :class="{ 'text-italic': isDirty(props.row) , 'bg-yellow-7': playerState.play && props.row == list[currentScript] }">
+                        <q-tr :props="props" 
+                            :class="{ 'text-italic': isDirty(props.row) , 'bg-yellow-7': playerState.play && props.row == list[currentScript],
+                                'row-hint': props.row.timer }">
                             <q-td auto-width class="small-cell">
                                 <q-checkbox dense :disable="disabled || playerState.play || playerState.record" v-model="props.selected"  />
                             </q-td>
-                            <q-td :props="props" v-for="col in table.columns" :key="col.name" class="small-cell">
+                            <q-td :props="props" v-for="col in table.columns" :key="col.name" class="small-cell" style="max-width: 160px; overflow-x: hidden; text-overflow: ellipsis;">
                                 <div v-if="!col.type || col.type == columnType.Text || col.type == columnType.Number">
                                     <div v-if="col.editable">
-                                        <q-input dense borderless v-model="props.row[col.field]" :type="col.type == columnType.Number? 'number':'text'"
-                                            @input="onInput(props.row, col.field, $event)"
+                                        <q-input dense borderless v-model.lazy="props.row[col.field]" 
+                                            :type="col.type == columnType.Number? 'number':( props.row.eventType == scriptType.ENTER_SECRET ?'password':'text')"
+                                            @change="onInput(props.row, col.field, $event)"
                                             :disable="disabled || playerState.play || playerState.record"
                                             />
                                     </div>
-                                    <div v-else>
-                                        {{ props.row[col.field] }}
+                                    <div v-else-if="props.row.eventType == scriptType.ENTER_SECRET">
+                                        <q-input dense borderless type="password"
+                                        :value="props.row[col.field]" readonly></q-input>
                                     </div>
+                                    <span v-else>
+                                        {{ props.row[col.field] }}
+                                    </span>
                                 </div>
                                 <div v-else-if="col.type==columnType.Button && col.presetData">
-                                    <q-btn dense v-for="(item,bi) in col.presetData" :key="bi" :color="!!item.color?item.color:'primary'" :label="item.label"
+                                    <q-btn dense flat v-for="(item,bi) in col.presetData" :key="bi" :color="!!item.color?item.color:'primary'" 
+                                        :label="item.label || (props.row[col.field]+'').substring(0,10)"
                                         @click="item.action? item.action(props.row):donothing()"
                                         :disable="disabled || playerState.play || playerState.record"
                                          />
@@ -114,6 +122,7 @@ export default class ScriptTable extends Vue{
     table: TableData<ScriptItem> | null = null;
     list: ScriptItem[]=[];
     columnType= ColumnType;
+    scriptType= ScriptType;
     pagination: any={
         rowsPerPage: 0
     }
@@ -125,12 +134,12 @@ export default class ScriptTable extends Vue{
             columns:[
                 { name:'id', field:'id', visible: false },
                 { name:'index', label: this.lang && this.lang.order?this.lang.order:'Order', field:'index', type: ColumnType.Number, editable: true, min: 0, max: 9999, errorMessage: this.orderErrorMessage },
-                { name:'type', label:this.lang && this.lang.type?this.lang.type:'Type', field:'type', type: ColumnType.List, presetData: this.typeList },
-                { name:'input', label:this.lang && this.lang.input?this.lang.input:'Input', field:'input', type: ColumnType.Text, editable: true },
+                { name:'type', label:this.lang && this.lang.type?this.lang.type:'Type', field:'eventType', type: ColumnType.List, presetData: this.typeList },
+                { name:'input', label:this.lang && this.lang.input?this.lang.input:'Input', field:'keyName', type: ColumnType.Text },
                 { name:'time-offset', label:this.lang && this.lang.timeOffset?this.lang.timeOffset:'Time Offset', field:'timeOffset', type: ColumnType.Number, editable: true },
                 { name:'action', label:this.lang && this.lang.timeOffset?this.lang.action:'Action', type: ColumnType.RoundButton, presetData:[ 
                     { icon: 'edit', color:'primary', action: this.onEditClick },
-                    { icon: 'delete', color:'red', action: this.onEditClick }
+                    { icon: 'delete', color:'red', action: this.onDeleteClick }
                 ] }
             ]
         };
@@ -148,6 +157,10 @@ export default class ScriptTable extends Vue{
     }
 
     onTypeChanged(data: ScriptItem){
+
+    }
+
+    onInputClick(data: ScriptItem){
 
     }
     onEditClick(data: ScriptItem){
@@ -211,13 +224,14 @@ export default class ScriptTable extends Vue{
 
     get typeList(){
         if (this.lang){
-            let result=[];
-            for (let key in Object.keys(ScriptType))
+            let result: any[]=[];
+            console.log(Object.keys(ScriptType));
+            Object.keys(ScriptType).forEach(key =>
             {
-                console.log(ScriptType[key]);
-                if (key && ScriptType[key])
-                    result.push({ label: this.lang && this.lang[ScriptType[key]] ? this.lang[ScriptType[key]]:ScriptType[key], value: +key  });
-            }
+                let type = key;
+                console.log(key);
+                result.push({ label: this.lang && this.lang[type] ? this.lang[type]:type, value: type  });
+            });
             return result;
          }
          return [];
@@ -265,23 +279,37 @@ export default class ScriptTable extends Vue{
         const num=2;
         for(let i=0; i<num; i++ )
             list.push(
-                { id: 0, index: (i+1), type: ScriptType.MOUSE_UP, input: i, timeOffset: i })
+                { id: 0, index: (i+1), eventType: ScriptType.MOUSE_UP, keyName: i, timeOffset: i })
         return list;
+    }
+
+    private setIndex(data: ScriptItem[]){
+        for (let i=0; i< data.length; i++){
+            data[i].id=i;
+            data[i].index=(i+1);
+        }
     }
 
     setTableData(data: ScriptItem[]){
         if (this.table){
-            for (let i=0; i< data.length; i++)
-                data[i].id=i;
+            this.setScript(data);
+            this.setIndex(data);
             this.table.selected=[];
-            this.list=[...data];
-            this.setScript(JSON.parse(JSON.stringify(data)));
+            this.list=JSON.parse(JSON.stringify(data));
         }
+    }
+
+    @Watch("script")
+    onScriptChanged(){
+        if (this.script)
+            this.setTableData(this.script);
     }
 
     save(){
         if (this.isListDirty) {
-            this.setTableData(this.list.sort((a,b)=>a.index && b.index? (a.index>b.index?1:-1):0));
+            let list=this.list.sort((a,b)=>a.index && b.index? (a.index>b.index?1:-1):0);
+
+            this.setTableData(list);
         }
     }
 
@@ -316,6 +344,23 @@ export default class ScriptTable extends Vue{
                         (item as any)[field] = col.min;
                     if (col.max!== undefined && (item as any)[field]>col.max)
                         (item as any)[field] = col.max;
+                        
+                    if (field=='index'){
+                        var index = this.list.findIndex(x=>x== item);
+                        var newIndex= (item.index || 1);
+                        var old = this.list.splice(index,1);
+                        newIndex= +newIndex-1;
+                        if (old && old.length==1){
+                            let target= old[0];
+                            target.timer= setTimeout(()=>{
+                                target.timer = null;
+                            },500)
+                            if (newIndex>=0)
+                                this.list.splice(+newIndex,0, target);
+                            else this.list.push(target);
+                            this.setIndex(this.list);
+                        }
+                    }
                 }
                 else if (col.type == ColumnType.Text && col.editable){
                     if (col.max!== undefined && (item as any)[field] && (item as any)[field].length> col.max){
@@ -333,5 +378,19 @@ export default class ScriptTable extends Vue{
 }
 td.small-cell{
     padding: 0px 6px !important;
+}
+
+.row-hint{
+    animation: all ease 0.8s infinite;
+    animation-name: row-hint-animation;
+}
+
+@keyframes row-hint-animation {
+    0%{
+        background: rgba(118,168,255,0.5);
+    }
+    100%{
+        background: rgba(118,168,255,0);
+    }
 }
 </style>

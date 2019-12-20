@@ -6,6 +6,7 @@ export class AppSettings{
     typeSpeed?: Number;
     language?: String;
     version?: string = "2.0.0";
+    port?: number;
 }
 
 export class KeyCombination{

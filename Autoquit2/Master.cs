@@ -1,6 +1,9 @@
-﻿using CefCore;
+﻿using Autoquit2.Services;
+using CefCore;
 using CefSharp;
 using CefSharp.WinForms;
+using HttpService.Utility;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -28,7 +31,9 @@ namespace Autoquit2
 
         private void MainBrowser_FrameLoadEnd( object sender, FrameLoadEndEventArgs e ) {
             Chromium.MainBrowser.SetZoomScale(0.8);
-            //Chromium.MainBrowser.ShowDevTools();
+            var settings = Settings.GetConfig();
+            Chromium.MainBrowser.ExecuteScriptAsync($"window.loadApp({Serializer.Json(settings)})");
+            Chromium.MainBrowser.ShowDevTools();
         }
 
         private void Browser_IsBrowserInitializedChanged(object sender, EventArgs e)

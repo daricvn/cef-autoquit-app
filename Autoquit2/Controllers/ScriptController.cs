@@ -1,4 +1,5 @@
 ﻿using Autoquit2.Models;
+using Autoquit2.Services;
 using HttpService;
 using HttpService.Core;
 using HttpService.Interfaces;
@@ -79,7 +80,21 @@ namespace Autoquit2.Controllers {
             return Response.BadRequest;
         }
 
-        [STAThread]
+        [Put("process/top")]
+        public IResponse BringTop( int pid ) {
+            try {
+                var proc = Process.GetProcessById(pid);
+                if ( proc != null && !proc.HasExited) {
+                    WinProcess.BringProcessToFront(proc);
+                    return Response.Success;
+                }
+            }
+            catch (Exception e ) {
+
+            }
+            return Response.BadRequest;
+        }
+
         [Get("browse")]
         public IResponse Browse() {
             string path = null;
@@ -94,7 +109,14 @@ namespace Autoquit2.Controllers {
                     path = dialog.FileName;
                 }
             }));
-            if ( path != null ) return Response.WithSuccess(path);
+            if ( path != null ) {
+                Script script = Compressor.ReadObject<Script>(path);
+                if (script.Scripts.Count>0 && 
+                    script.Scripts
+                        .FirstOrDefault(x=>x.EventType.StartsWith("LEFT") || x.EventType.StartsWith("RIGHT")) !=null)
+                    Migrator.MigrateScript(ref script);
+                return Response.WithSuccess(new { path, script });
+            }
             return Response.NoContent;
         }
 
