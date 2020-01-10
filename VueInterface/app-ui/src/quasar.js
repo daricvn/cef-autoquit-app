@@ -32,7 +32,9 @@ import {
   QTabPanels,
   QSeparator,
   QImg,
+  QVirtualScroll,
   QSlider,
+  QList,
   Notify,
   Loading
 } from 'quasar'
@@ -64,6 +66,8 @@ Vue.use(Quasar, {
     QTabPanels,
     QSeparator,
     QSlider,
+    QVirtualScroll,
+    QList,
     QImg
   },
   directives: {

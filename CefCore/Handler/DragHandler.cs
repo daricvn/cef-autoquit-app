@@ -12,7 +12,9 @@ namespace CefCore.Handler
     {
         public bool OnDragEnter(IWebBrowser chromiumWebBrowser, IBrowser browser, IDragData dragData, DragOperationsMask mask)
         {
-            return true;
+            if (dragData.IsFile || dragData.IsLink)
+                return true;
+            return false;
         }
 
         public void OnDraggableRegionsChanged(IWebBrowser chromiumWebBrowser, IBrowser browser, IFrame frame, IList<DraggableRegion> regions)

@@ -9,6 +9,7 @@ export class ScriptItem{
     dirty?: Boolean;
     timer?: any;
     fade?: number;
+    clear?: boolean;
     static compare(source: ScriptItem, other: ScriptItem): Boolean {
         return source.index==other.index &&
         source.eventType==other.eventType &&

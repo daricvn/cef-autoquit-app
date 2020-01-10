@@ -2,83 +2,60 @@
     <div class="column full-height"
         style="width: 100%;">
         <div class="col-auto" style="min-height: 73vh; border: 0.1px solid lightgrey; overflow: hidden;">
-            <q-table
-                v-if="table"
-            :data="list"
-            :columns="table.columns"
-            :selection="selectionType"
-            :selected.sync="table.selected"
-            square
-            flat
-            dense
-            bordered
-            :rows-per-page-options="[0]"
-            separator="cell"
-            hide-bottom
-            virtual-scroll
-            row-key="id"
-            style="width: 100%;"
-            table-style="max-height: 73vh; overflow-x: hidden;"
-            :pagination.sync="pagination"
-            :virtual-scroll-slice-size="40"
-            :visible-columns="tableColumn"
+             <q-list separator bordered dense>
+                <q-item>
+                    <q-item-section>
+                        <q-item-label>
+                            <q-checkbox :value="isCheckedAll" @input="toggleCheckAll()"></q-checkbox>
+                        </q-item-label>
+                    </q-item-section>
+                </q-item>
+            </q-list>
+            <q-virtual-scroll
+                style="max-height: 70vh;"
+                :items="list"
+                separator
             >
-                <template v-slot:body="props">
-                    <transition name="slide-left" appear>
-                        <q-tr :props="props" 
-                            :class="{ 'text-italic': isDirty(props.row) , 'bg-yellow-7': playerState.play && props.row == list[currentScript],
-                                'row-hint': props.row.timer }">
-                            <q-td auto-width class="small-cell">
-                                <q-checkbox dense :disable="disabled || playerState.play || playerState.record" v-model="props.selected"  />
-                            </q-td>
-                            <q-td :props="props" v-for="col in table.columns" :key="col.name" class="small-cell" style="max-width: 160px; overflow-x: hidden; text-overflow: ellipsis;">
-                                <div v-if="!col.type || col.type == columnType.Text || col.type == columnType.Number">
-                                    <div v-if="col.editable">
-                                        <q-input dense borderless v-model.lazy="props.row[col.field]" 
-                                            :type="col.type == columnType.Number? 'number':( props.row.eventType == scriptType.ENTER_SECRET ?'password':'text')"
-                                            @change="onInput(props.row, col.field, $event)"
-                                            :disable="disabled || playerState.play || playerState.record"
-                                            />
+                <template v-slot="{ item, index }">
+                    <q-item
+                        class="script-item"
+                        :key="index"
+                        draggable
+                        @dragover.prevent
+                        @dragenter="onDragEnter($event, item)"
+                        @dragstart="onDragStart($event, item)"
+                        @dragend="onDrop($event)"
+                        :class="{ 'bg-blue-1': item.clear , 'bg-grey-5': !item.clear && !item.active, 'bg-orange': !!item.sendInput }"
+                    >   
+                        <q-item-section >
+                            <q-item-label>
+                                <div class="row" style="max-width: 90vw;" v-show="!item.clear">
+                                    <div class="col-1">
+                                        <q-checkbox :val="item" v-model="selectedItems"></q-checkbox>
                                     </div>
-                                    <div v-else-if="props.row.eventType == scriptType.ENTER_SECRET">
-                                        <q-input dense borderless type="password"
-                                        :value="props.row[col.field]" readonly></q-input>
-                                    </div>
-                                    <span v-else>
-                                        {{ props.row[col.field] }}
-                                    </span>
-                                </div>
-                                <div v-else-if="col.type==columnType.Button && col.presetData">
-                                    <q-btn dense flat v-for="(item,bi) in col.presetData" :key="bi" :color="!!item.color?item.color:'primary'" 
-                                        :label="item.label || (props.row[col.field]+'').substring(0,10)"
-                                        @click="item.action? item.action(props.row):donothing()"
-                                        :disable="disabled || playerState.play || playerState.record"
-                                         />
-                                </div>
-                                <div v-else-if="col.type==columnType.RoundButton && col.presetData">
-                                    <q-btn dense v-for="(item,bi) in col.presetData" size="11px" :key="bi" round 
-                                        style="margin-right: 1px;"
-                                            :color="!!item.color?item.color:'primary'" :icon="item.icon"
-                                            :disable="disabled || playerState.play || playerState.record" 
-                                    @click="item.action? item.action(props.row):donothing()">
-                                        <q-tooltip v-if="item.label">
-                                            {{ item.label }}
-                                        </q-tooltip>
-                                    </q-btn>
-                                </div>
-                                <div v-else-if="col.type==columnType.List && col.presetData">
-                                    <q-select dense borderless v-model="props.row[col.field]" :options="col.presetData"
-                                        emit-value
+                                    <div class="col-3">
+                                        <q-select square outlined dense v-model="item.eventType" :options="typeList" :label="lang.type" 
+                                        :readonly="!item.active"
                                         map-options
-                                        option-value="value" option-label="label" @input="onTypeChanged(props.row)"
-                                        :disable="disabled || playerState.play || playerState.record"
-                                         />
+                                        emit-value />
+                                    </div>
+                                    <div class="col-2">
+                                        <q-input square outlined dense v-model="item.keyName" :label="lang.input" :readonly="!item.active || isEditableInput(item.keyName)"
+                                            :disable="!item.active" />
+                                    </div>
+                                    <div class="col-2">
+                                        <q-input type="number" :min="0" :max="1000000" square outlined dense v-model="item.timeOffset" :label="lang.timeoffset"
+                                        :readonly="!item.active" />
+                                    </div>
+                                    <div class="col-1">
+                                        <q-checkbox v-model="item.active" :label="lang.active" color="cyan"></q-checkbox>
+                                    </div>
                                 </div>
-                            </q-td>
-                        </q-tr>
-                    </transition>
+                            </q-item-label>
+                        </q-item-section>
+                    </q-item>
                 </template>
-            </q-table>
+            </q-virtual-scroll>
         </div>
         <div class="col-auto q-mt-sm q-pl-sm q-pr-sm">
             <transition-group name="slide-left" appear>
@@ -86,8 +63,8 @@
                     v-if="!(playerState.play || playerState.record)">
                     <q-tooltip>{{ !!lang ? lang.add:'Add' }}</q-tooltip>
                 </q-btn>
-                <div key="delete-btn" class="tooltip-wrapper q-mr-sm" v-if="!(!table || !table.selected || table.selected.length==0) && !(playerState.play || playerState.record)">
-                    <q-btn @click="deleteAll()" glossy round icon="delete_sweep" color="red" size="14px" :disable="!table || !table.selected || table.selected.length==0">
+                <div key="delete-btn" class="tooltip-wrapper q-mr-sm" v-if="!(!selectedItems || selectedItems.length==0) && !(playerState.play || playerState.record)">
+                    <q-btn @click="deleteAll()" glossy round icon="delete_sweep" color="red" size="14px" :disable="!selectedItems || selectedItems.length <=0">
                     </q-btn>
                     <q-tooltip>{{ !!lang ? lang.deleteselected:'Delete Selected' }}</q-tooltip>
                 </div>
@@ -119,31 +96,19 @@ export default class ScriptTable extends Vue{
     @State("script") script: Array<any> | undefined;
     @Mutation("setScript") setScript: any;
     @State("player") playerState: any;
-    table: TableData<ScriptItem> | null = null;
+    // table: TableData<ScriptItem> | null = null;
     list: ScriptItem[]=[];
+    selectedItems: any[]=[];
     columnType= ColumnType;
     scriptType= ScriptType;
     pagination: any={
         rowsPerPage: 0
     }
     currentScript: number=0;
+    dragItem?: ScriptItem ;
+    lastDragIndex: number =-1;
 
     mounted() {
-        this.table={
-            selected:[],
-            columns:[
-                { name:'id', field:'id', visible: false },
-                { name:'index', label: this.lang && this.lang.order?this.lang.order:'Order', field:'index', type: ColumnType.Number, editable: true, min: 0, max: 9999, errorMessage: this.orderErrorMessage },
-                { name:'type', label:this.lang && this.lang.type?this.lang.type:'Type', field:'eventType', type: ColumnType.List, presetData: this.typeList },
-                { name:'input', label:this.lang && this.lang.input?this.lang.input:'Input', field:'keyName', type: ColumnType.Text },
-                { name:'time-offset', label:this.lang && this.lang.timeOffset?this.lang.timeOffset:'Time Offset', field:'timeOffset', type: ColumnType.Number, editable: true },
-                { name:'action', label:this.lang && this.lang.timeOffset?this.lang.action:'Action', type: ColumnType.RoundButton, presetData:[ 
-                    { icon: 'edit', color:'primary', action: this.onEditClick },
-                    { icon: 'delete', color:'red', action: this.onDeleteClick }
-                ] }
-            ]
-        };
-
         (window as any)['addScript'] = (json: string)=>{
             let item = JSON.parse(json) as ScriptItem;
             if (item)
@@ -153,7 +118,7 @@ export default class ScriptTable extends Vue{
     }
 
     load(reload: boolean = false){
-        this.setTableData(this.script as ScriptItem[]);
+        this.setListData(this.script as ScriptItem[]);
     }
 
     onTypeChanged(data: ScriptItem){
@@ -182,15 +147,25 @@ export default class ScriptTable extends Vue{
              message: this.lang ? this.lang.confirm_delete : 'Are you sure want to delete all selected item(s)?'
         })
         .onOk(()=>{
-            if (this.table){
-                (this.table.selected as any[])
-                    .forEach(item=>{
+            if (this.selectedItems){
+                this.selectedItems.forEach(item=>{
                         const index: number= this.list.findIndex(x=>x.id == item);
                         this.list.splice(index, 1);
                     })
-                this.table.selected=[];
+                this.selectedItems=[];
             }
         });
+    }
+
+    get isCheckedAll(){
+        return this.selectedItems.length == this.list.length
+    }
+
+    toggleCheckAll(){
+        if (this.isCheckedAll)
+            this.selectedItems.splice(0, this.selectedItems.length);
+        else
+            this.selectedItems.splice(0, this.selectedItems.length, ...this.list);
     }
 
     isDirty(row: ScriptItem){
@@ -225,49 +200,15 @@ export default class ScriptTable extends Vue{
     get typeList(){
         if (this.lang){
             let result: any[]=[];
-            console.log(Object.keys(ScriptType));
+            // console.log(Object.keys(ScriptType));
             Object.keys(ScriptType).forEach(key =>
             {
                 let type = key;
-                console.log(key);
                 result.push({ label: this.lang && this.lang[type] ? this.lang[type]:type, value: type  });
             });
             return result;
          }
          return [];
-    }
-
-    get tableColumn(){
-        if (this.table && this.table.columns){
-            const cols = this.table.columns.filter(x=> x.visible !== false);
-            const result: any[]=[];
-            cols.forEach(col=> result.push(col.name));
-            return result;
-        }
-        return [];
-    }
-
-    validator(col: TableColumn, row: any): Boolean | String{
-        if (row){
-            let val=row[col.field];
-            if (val && col && col.min !== undefined && col.max !== undefined){
-                let min=col.min;
-                let max=col.max;
-                return col.type== ColumnType.Number ? (val >= min && val <= max):
-                    ((!!val && (val+"").length>=min && (val+"").length<=max));
-            }
-            if (val && col && col.min !== undefined){
-                let min=col.min;
-                return col.type== ColumnType.Number ? (val >= min):
-                    ((!!val && (val+"").length>=min));
-            }
-            if (val && col && col.max !== undefined){
-                let max=col.max;
-                return col.type== ColumnType.Number ? (!val || val <= max):
-                    ((!val || (val+"").length<=max));
-            }
-        }
-        return true;
     }
 
     donothing(){
@@ -290,33 +231,33 @@ export default class ScriptTable extends Vue{
         }
     }
 
-    setTableData(data: ScriptItem[]){
-        if (this.table){
+    setListData(data: ScriptItem[]){
+        // if (this.table){
             this.setScript(data);
             this.setIndex(data);
-            this.table.selected=[];
+            this.selectedItems=[];
             this.list=JSON.parse(JSON.stringify(data));
-        }
+        // }
     }
 
     @Watch("script")
     onScriptChanged(){
         if (this.script)
-            this.setTableData(this.script);
+            this.setListData(this.script);
     }
 
     save(){
         if (this.isListDirty) {
             let list=this.list.sort((a,b)=>a.index && b.index? (a.index>b.index?1:-1):0);
 
-            this.setTableData(list);
+            this.setListData(list);
         }
     }
 
     push(item: ScriptItem | undefined = undefined){
         if (item)
             this.list.push(item);
-        else this.list.push({ id: new Date().getTime() });
+        else this.list.push({ id: new Date().getTime(), active: true });
     }
 
     undo(){
@@ -335,44 +276,57 @@ export default class ScriptTable extends Vue{
         })
     }
 
-    onInput(item: ScriptItem, field: string, event: any){
-        if (this.table && this.table.columns){
-            const col= this.table.columns.find(x=>x.name==field);
-            if (col && (col.min !== undefined || col.max !== undefined)){
-                if (col.type== ColumnType.Number){
-                    if (col.min!== undefined && (item as any)[field]<col.min)
-                        (item as any)[field] = col.min;
-                    if (col.max!== undefined && (item as any)[field]>col.max)
-                        (item as any)[field] = col.max;
-                        
-                    if (field=='index'){
-                        var index = this.list.findIndex(x=>x== item);
-                        var newIndex= (item.index || 1);
-                        var old = this.list.splice(index,1);
-                        newIndex= +newIndex-1;
-                        if (old && old.length==1){
-                            let target= old[0];
-                            target.timer= setTimeout(()=>{
-                                target.timer = null;
-                            },500)
-                            if (newIndex>=0)
-                                this.list.splice(+newIndex,0, target);
-                            else this.list.push(target);
-                            this.setIndex(this.list);
-                        }
-                    }
-                }
-                else if (col.type == ColumnType.Text && col.editable){
-                    if (col.max!== undefined && (item as any)[field] && (item as any)[field].length> col.max){
-                        (item as any)[field]=((item as any)[field] +"").substr(0, +col.max);
-                    }
-                }
+    onDragEnter(e: any, targetItem: ScriptItem){
+        if (e.target.draggable && e.target.className.indexOf("script-item")>=0 && !targetItem.clear && this.dragItem && this.dragItem!= targetItem){
+            // e.target.classList.add("drag-enter");
+            const clear = this.list.findIndex(x=>x.clear);
+            const dIndex= this.list.findIndex(x=>x==this.dragItem);
+            const nIndex= this.list.findIndex(x=>x==targetItem);
+            if (dIndex>=0)
+                this.list.splice(dIndex,1);
+            if (clear<0){
+                this.list.splice(nIndex, 0, { id: -1, clear: true });
             }
+            else{
+                const clearItem = this.list.splice(clear,1)[0];
+                this.list.splice(nIndex, 0, clearItem);
+            }
+            this.lastDragIndex = nIndex;
+            // this.list.splice(nIndex,0, this.dragItem);
         }
+    }
+    onDrop(e: any){
+        setTimeout(()=>{
+            let clear = this.list.findIndex(x=>x.clear);
+            if (clear >= 0){
+                this.list.splice(clear,1);
+            }
+            else clear=this.lastDragIndex;
+            let dIndex = this.list.findIndex(x=> x== this.dragItem);
+                if (this.dragItem && dIndex<0)
+                    this.list.splice(clear,0, this.dragItem);
+        },0);
+    }
+    onDragStart(e: any, item: ScriptItem){
+        if (!item.clear){
+            e.dataTransfer.dropEffect = 'move';
+            this.dragItem=item;
+        }
+    }
+
+    isEditableInput(type: ScriptType){
+        return type == ScriptType.ENTER_TEXT || type == ScriptType.ENTER_SECRET || type == ScriptType.RANDOM_TEXT;
+    }
+    log(item: any){
+        console.log(item);
     }
 }
 </script>
 <style>
+.drag-enter{
+    border: 2px solid black;
+}
+
 .disabled, .disabled *, [disabled], [disabled] *{
     cursor: default !important;
 }
