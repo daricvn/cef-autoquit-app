@@ -28,8 +28,8 @@
                         :class="{ 'bg-blue-1': item.clear , 'bg-grey-5': !item.clear && !item.active, 'bg-orange': !!item.sendInput }"
                     >   
                         <q-item-section >
-                            <q-item-label>
-                                <div class="row" style="max-width: 90vw;" v-show="!item.clear">
+                            <q-item-label style="max-height: 41px;">
+                                <div class="row" style="max-width: 90vw;" v-show="!item.clear" :class="{ 'text-italic': !item.clear && isDirty(item) }">
                                     <div class="col-1">
                                         <q-checkbox :val="item" v-model="selectedItems"></q-checkbox>
                                     </div>
@@ -47,8 +47,19 @@
                                         <q-input type="number" :min="0" :max="1000000" square outlined dense v-model="item.timeOffset" :label="lang.timeoffset"
                                         :readonly="!item.active" />
                                     </div>
-                                    <div class="col-1">
-                                        <q-checkbox v-model="item.active" :label="lang.active" color="cyan"></q-checkbox>
+                                    <div class="col-2">
+                                        <q-checkbox v-model="item.active" color="green" class="round">
+                                            <q-tooltip>{{ lang.active }}</q-tooltip>
+                                        </q-checkbox>
+                                        <q-checkbox v-model="item.sendInput" color="red" class="round" :disable="!item.active" v-show="item.active">
+                                            <q-tooltip>{{ lang.manipulateMode }}</q-tooltip>
+                                        </q-checkbox>
+                                    </div>
+                                    <div class="col-2">
+                                        <q-btn rounded dense class="q-pr-sm" color="primary" @click="edit(item)">
+                                            <q-icon class="on-left" name="edit"></q-icon>
+                                            {{ lang.edit }}
+                                        </q-btn>
                                     </div>
                                 </div>
                             </q-item-label>
@@ -80,22 +91,29 @@
                 </div>
             </transition-group>
         </div>
+        <edit-script-item ref="editModal" :typeList="typeList" :min="1" :max="list.length" @update="sort" />
     </div>
 </template>
 
 <script lang="ts">
-import {Vue, Component, Prop, InjectReactive, Watch} from 'vue-property-decorator'
+import {Vue, Component, Prop, InjectReactive, Watch, Ref} from 'vue-property-decorator'
 import { TableData, ColumnType, TableColumn } from '../models/TableData';
 import { ScriptItem, ScriptType } from '../models/ScriptItem';
 import { State, Mutation } from 'vuex-class';
+import EditScriptItem from './forms/EditScriptItem.vue';
 
-@Component
+@Component({
+    components:{
+        EditScriptItem
+    }
+})
 export default class ScriptTable extends Vue{
     @Prop({ default: false, type: Boolean }) disabled: Boolean | undefined;
     @State("lang") lang: any;
     @State("script") script: Array<any> | undefined;
     @Mutation("setScript") setScript: any;
     @State("player") playerState: any;
+    @Ref("editModal") editModal!: EditScriptItem;
     // table: TableData<ScriptItem> | null = null;
     list: ScriptItem[]=[];
     selectedItems: any[]=[];
@@ -107,7 +125,7 @@ export default class ScriptTable extends Vue{
     currentScript: number=0;
     dragItem?: ScriptItem ;
     lastDragIndex: number =-1;
-
+    selectedItem!: ScriptItem;
     mounted() {
         (window as any)['addScript'] = (json: string)=>{
             let item = JSON.parse(json) as ScriptItem;
@@ -200,7 +218,6 @@ export default class ScriptTable extends Vue{
     get typeList(){
         if (this.lang){
             let result: any[]=[];
-            // console.log(Object.keys(ScriptType));
             Object.keys(ScriptType).forEach(key =>
             {
                 let type = key;
@@ -257,7 +274,20 @@ export default class ScriptTable extends Vue{
     push(item: ScriptItem | undefined = undefined){
         if (item)
             this.list.push(item);
-        else this.list.push({ id: new Date().getTime(), active: true });
+        else this.list.push({ id: new Date().getTime(), index: this.list.length+1, active: true, sendInput: false });
+    }
+
+    edit(item: ScriptItem){
+        this.editModal.open(item);
+    }
+
+    sort(model: ScriptItem){
+        var dIndex= this.list.findIndex(x=>x.id == model.id);
+        if (dIndex>=0){
+            this.list.splice(dIndex,1);
+            this.list.push({ ... model});
+        }
+        this.list=this.list.sort((a,b)=>a.index && b.index? (a.index>b.index?1:-1):0);
     }
 
     undo(){
@@ -311,6 +341,7 @@ export default class ScriptTable extends Vue{
         if (!item.clear){
             e.dataTransfer.dropEffect = 'move';
             this.dragItem=item;
+            this.list
         }
     }
 

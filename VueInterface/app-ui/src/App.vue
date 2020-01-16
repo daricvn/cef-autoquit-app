@@ -156,4 +156,11 @@ export default class App extends Vue {
   .line-30{
     line-height: 30px;
   }
+
+    .q-checkbox.round .q-checkbox__bg.absolute{
+      border-radius: 50%;
+    }
+    .q-checkbox.round .q-checkbox__inner--active .q-checkbox__bg.absolute{
+      border: 1px solid rgba(0,0,0,.54);
+    }
 </style>

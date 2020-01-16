@@ -35,8 +35,13 @@ import {
   QVirtualScroll,
   QSlider,
   QList,
+  QDialog,
+  QCard,
+  QCardSection,
+  QCardActions,
   Notify,
-  Loading
+  Loading,
+  ClosePopup
 } from 'quasar'
 
 Vue.use(Quasar, {
@@ -68,10 +73,15 @@ Vue.use(Quasar, {
     QSlider,
     QVirtualScroll,
     QList,
+    QDialog,
+    QCard,
+    QCardSection,
+    QCardActions,
     QImg
   },
   directives: {
-    Ripple
+    Ripple,
+    ClosePopup
   },
   plugins: {
     Dialog,
