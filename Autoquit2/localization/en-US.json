@@ -43,6 +43,7 @@
   "manipulateMode": "Manipulate Mode",
   "process": "Process",
   "subprocess": "Sub Process",
+  "setcoord": "Set Coordinate",
 
   "playbackspeed": "Playback Speed",
   "playbackcount": "Current",

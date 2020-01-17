@@ -1,19 +1,33 @@
 <template>
   <div>
-        <q-input v-if="scriptType=='textarea'" :maxlength="600" autogrow :value="value"
+        <q-input v-if="scriptType=='textarea'" :maxlength="600" autogrow :value="value" :label="label"
             square outlined type="textarea" @input="sendInput"></q-input>
-        <q-input v-else-if="scriptType=='password'" :value="value"
+        <q-input v-else-if="scriptType=='text'" :dense="simply" :maxlength="600" :value="value" :label="label"
+            square outlined type="text" @input="sendInput"></q-input>
+        <q-input v-else-if="scriptType=='password'" :dense="simply" :value="value" :label="label"
             square outlined type="password" @input="sendInput"></q-input>
-        <q-input v-else-if="scriptType =='key'"
+        <q-input v-else-if="scriptType =='key'" :dense="simply"  :label="label"
             square outlined :value="value" @keydown.prevent="onKeydown($event)"></q-input>
-        <q-input v-else-if="scriptType == 'mouse'"
-            square outlined :value="value" @keydown.prevent @mousedown="onMousedown($event)"></q-input>
+        <q-input v-else-if="scriptType == 'mouse'" :dense="simply"  :label="label"
+            square outlined :value="mouseValue" @keydown.prevent @mousedown="onMousedown($event)"></q-input>
         <div class="row" v-else-if="scriptType =='file'">
             <div class="col-8">
-                <q-input :value="value" @keydown.prevent @click="browse"></q-input>
+                <q-input :value="value" @keydown.prevent @click="browse" :label="label"></q-input>
             </div>
             <div class="col-4">
                 <q-btn color="primary" :label="lang.browsefile" @click="browse"></q-btn>
+            </div>
+        </div>
+        <q-input v-else-if="scriptType =='file-field'" :dense="simply"  :label="label" :value="value" @keydown.prevent @click="browse"></q-input>
+        <div class="row" v-if="scriptType == 'mouse' && ! simply">
+            <div class="col">
+                <q-input label="X" type="number" dense square outlined :value="coord.x" @input="val=>setCoord(val, coord.y)"></q-input>
+            </div>
+            <div class="col">
+                <q-input label="Y" type="number" dense square outlined :value="coord.y" @input="val=>setCoord(coord.x, val)"></q-input>
+            </div>
+            <div class="col justify-center vertical-middle text-center">
+                <q-btn dense :label="lang.setcoord" color="primary"></q-btn>
             </div>
         </div>
   </div>
@@ -23,17 +37,23 @@
 import Component from 'vue-class-component';
 import Vue from 'vue'
 import { ScriptType } from '../../models/ScriptItem';
-import { Prop, Emit } from 'vue-property-decorator';
+import { Prop, Emit, PropSync, Watch } from 'vue-property-decorator';
 import { State } from 'vuex-class';
+import Coord from '../../models/Coord';
 
 @Component
 export default class FlexibleInput extends Vue{
     @State("lang") lang: any;
     @Prop() type: ScriptType = ScriptType.DO_NOTHING;
     @Prop() value: string = "";
+    @Prop({
+        default: new Coord()
+    }) coord: Coord = new Coord();
+    @Prop() simply: boolean = false;
+    @Prop() label?: string;
     get scriptType(){
         if (this.type == ScriptType.ENTER_TEXT || this.type == ScriptType.RANDOM_TEXT)
-            return 'textarea';
+            return this.simply?'text':'textarea';
         if (this.type == ScriptType.ENTER_SECRET)
             return 'password';
         if (this.type == ScriptType.KEY_UP || this.type == ScriptType.KEY_DOWN || this.type == ScriptType.KEY_PRESS)
@@ -41,12 +61,15 @@ export default class FlexibleInput extends Vue{
         if (this.type == ScriptType.MOUSE_UP || this.type == ScriptType.MOUSE_DOWN || this.type == ScriptType.MOUSE_CLICK)
             return 'mouse';
         if (this.type == ScriptType.FROM_FILE)
-            return 'file';
+            return this.simply?'file-field':'file';
         return null;
     }
 
     onKeydown(event: KeyboardEvent){
-        this.value = event.key.toUpperCase();
+        let key = event.code;
+        // if (event.location == event.DOM_KEY_LOCATION_NUMPAD)
+        //     key = `Numpad${key}`;
+        this.value = key;
         this.sendInput(this.value);
     }
     onMousedown(event: MouseEvent){
@@ -58,6 +81,12 @@ export default class FlexibleInput extends Vue{
         this.sendInput(this.value);
     }
 
+    get mouseValue(){
+        if (this.simply)
+            return `${this.value}[${this.coord.x || 0}:${this.coord.y || 0}]`
+        else return this.value;
+    }
+
     browse(){
 
     }
@@ -66,6 +95,19 @@ export default class FlexibleInput extends Vue{
     sendInput(value: string){
         this.value=value;
         return value;
+    }
+
+    @Emit("update-coord")
+    updateCoord(){
+        return this.coord;
+    }
+
+    setCoord(x: number, y: number){
+        if (this.coord){
+            this.coord.x=x;
+            this.coord.y=y;
+            this.updateCoord();
+        }
     }
 }
 </script>

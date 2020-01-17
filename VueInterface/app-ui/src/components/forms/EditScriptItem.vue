@@ -21,12 +21,14 @@
               <div class="col">
                     <!-- <q-input square outlined dense v-model="keyName" :label="lang.input" :readonly="!active"
                         :disable="!active" /> -->
-                    <flexible-input v-model="keyName" :type="eventType" :value="keyName" />
+                    <flexible-input v-model="keyName" :label="lang.input" :type="eventType" :value="keyName" 
+                    :coord.sync="coord" @update-coord="onCoordUpdated"
+                    />
               </div>
               <div class="col">
                   <div class="row">
                       <div class="col">
-                            <q-input type="number" :min="0" :max="1000000" square outlined dense v-model="timeOffset" 
+                            <q-input type="number" :step="10" :min="0" :max="1000000" square outlined dense v-model="timeOffset" 
                                 :label="lang.timeoffset"
                                 :readonly="!active" />
                       </div>
@@ -55,13 +57,15 @@ import { State } from 'vuex-class';
 import { ScriptItem, ScriptType } from '../../models/ScriptItem';
 import { Vue, Component, Prop, Emit } from 'vue-property-decorator';
 import FlexibleInput from './FlexibleInput.vue';
+import ScriptEditor from './ScriptEditor.vue';
+import Coord from '../../models/Coord';
 
 @Component({
     components:{
         FlexibleInput
     }
 })
-export default class EditScriptItem extends Vue{
+export default class EditScriptItem extends ScriptEditor{
     display: boolean =false;
     model: ScriptItem = new ScriptItem();
     @State("lang") lang: any;
@@ -74,7 +78,7 @@ export default class EditScriptItem extends Vue{
     timeOffset: Number =0;
     active: boolean = false;
     sendInput: boolean = false;
-
+    coord: Coord = new Coord();
     
     open(model?: ScriptItem){
         if (model == null)
@@ -88,6 +92,9 @@ export default class EditScriptItem extends Vue{
         this.timeOffset = this.model.timeOffset || 0;
         this.active = !!this.model.active;
         this.sendInput = !!this.model.sendInput;
+        if (this.model.coord)
+            this.coord = this.model.coord;
+        else this.coord= new Coord();
         this.display = true;
         setTimeout(()=>this.$forceUpdate(), 200);
     }
@@ -123,18 +130,11 @@ export default class EditScriptItem extends Vue{
         this.eventType = value;
     }
 
-    getScriptType(type: ScriptType){
-        if (type == ScriptType.ENTER_TEXT || type == ScriptType.RANDOM_TEXT)
-            return 'textarea';
-        if (type == ScriptType.ENTER_SECRET)
-            return 'password';
-        if (type == ScriptType.KEY_UP || type == ScriptType.KEY_DOWN || type == ScriptType.KEY_PRESS)
-            return 'key';
-        if (type == ScriptType.MOUSE_UP || type == ScriptType.MOUSE_DOWN || type == ScriptType.MOUSE_CLICK)
-            return 'mouse';
-        if (type == ScriptType.FROM_FILE)
-            return 'file';
-        return null;
+    onCoordUpdated(value: Coord){
+        if (!this.coord)
+            this.coord = {};
+        this.coord.x= value.x;
+        this.coord.y = value.y;
     }
 }
 </script>

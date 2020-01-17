@@ -40,11 +40,12 @@
                                         emit-value />
                                     </div>
                                     <div class="col-2">
-                                        <q-input square outlined dense v-model="item.keyName" :label="lang.input" :readonly="!item.active || isEditableInput(item.keyName)"
-                                            :disable="!item.active" />
+                                        <!-- <q-input square outlined dense v-model="item.keyName" :label="lang.input" :readonly="!item.active || isEditableInput(item.keyName)"
+                                            :disable="!item.active" /> -->
+                                        <flexible-input :simply="true" :label="lang.input" v-model="item.keyName" :type="item.eventType" :value="item.keyName" />
                                     </div>
                                     <div class="col-2">
-                                        <q-input type="number" :min="0" :max="1000000" square outlined dense v-model="item.timeOffset" :label="lang.timeoffset"
+                                        <q-input type="number" :step="10" :min="0" :max="1000000" square outlined dense v-model="item.timeOffset" :label="lang.timeoffset"
                                         :readonly="!item.active" />
                                     </div>
                                     <div class="col-2">
@@ -101,13 +102,16 @@ import { TableData, ColumnType, TableColumn } from '../models/TableData';
 import { ScriptItem, ScriptType } from '../models/ScriptItem';
 import { State, Mutation } from 'vuex-class';
 import EditScriptItem from './forms/EditScriptItem.vue';
+import ScriptEditor from './forms/ScriptEditor.vue';
+import FlexibleInput from './forms/FlexibleInput.vue';
 
 @Component({
     components:{
-        EditScriptItem
+        EditScriptItem,
+        FlexibleInput
     }
 })
-export default class ScriptTable extends Vue{
+export default class ScriptTable extends ScriptEditor{
     @Prop({ default: false, type: Boolean }) disabled: Boolean | undefined;
     @State("lang") lang: any;
     @State("script") script: Array<any> | undefined;
@@ -348,6 +352,7 @@ export default class ScriptTable extends Vue{
     isEditableInput(type: ScriptType){
         return type == ScriptType.ENTER_TEXT || type == ScriptType.ENTER_SECRET || type == ScriptType.RANDOM_TEXT;
     }
+
     log(item: any){
         console.log(item);
     }

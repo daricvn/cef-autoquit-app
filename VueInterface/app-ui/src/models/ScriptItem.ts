@@ -1,3 +1,5 @@
+import Coord from './Coord';
+
 export class ScriptItem{
     id: Number | undefined;
     index?: Number;
@@ -10,13 +12,16 @@ export class ScriptItem{
     timer?: any;
     fade?: number;
     clear?: boolean;
+    coord?: Coord;
     static compare(source: ScriptItem, other: ScriptItem): Boolean {
         return source.index==other.index &&
         source.eventType==other.eventType &&
         source.keyName == other.keyName &&
         source.timeOffset == other.timeOffset &&
         source.active == other.active &&
-        source.sendInput == other.sendInput
+        source.sendInput == other.sendInput &&
+        ((source.coord==null && other.coord == null) || 
+        (source.coord!=null && other.coord!=null && source.coord.x == other.coord.x && source.coord.y == other.coord.y))
     }
 }
 
