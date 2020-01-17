@@ -42,7 +42,7 @@
                                     <div class="col-2">
                                         <!-- <q-input square outlined dense v-model="item.keyName" :label="lang.input" :readonly="!item.active || isEditableInput(item.keyName)"
                                             :disable="!item.active" /> -->
-                                        <flexible-input :simply="true" :label="lang.input" v-model="item.keyName" :type="item.eventType" :value="item.keyName" />
+                                        <flexible-input :simply="true" :label="lang.input" v-model="item.keyName" :type="item.eventType" :value="item.keyName" :coord="item.coord" />
                                     </div>
                                     <div class="col-2">
                                         <q-input type="number" :step="10" :min="0" :max="1000000" square outlined dense v-model="item.timeOffset" :label="lang.timeoffset"
@@ -278,7 +278,7 @@ export default class ScriptTable extends ScriptEditor{
     push(item: ScriptItem | undefined = undefined){
         if (item)
             this.list.push(item);
-        else this.list.push({ id: new Date().getTime(), index: this.list.length+1, active: true, sendInput: false });
+        else this.list.push({ id: new Date().getTime(), index: this.list.length+1, active: true, sendInput: false, coord: {x:0, y:0} });
     }
 
     edit(item: ScriptItem){

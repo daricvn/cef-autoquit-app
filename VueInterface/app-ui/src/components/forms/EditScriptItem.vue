@@ -78,7 +78,7 @@ export default class EditScriptItem extends ScriptEditor{
     timeOffset: Number =0;
     active: boolean = false;
     sendInput: boolean = false;
-    coord: Coord = new Coord();
+    coord: Coord = { x:0, y: 0};
     
     open(model?: ScriptItem){
         if (model == null)
@@ -93,8 +93,8 @@ export default class EditScriptItem extends ScriptEditor{
         this.active = !!this.model.active;
         this.sendInput = !!this.model.sendInput;
         if (this.model.coord)
-            this.coord = this.model.coord;
-        else this.coord= new Coord();
+            this.coord = { ...this.model.coord};
+        else this.coord= { x: 0, y: 0 };
         this.display = true;
         setTimeout(()=>this.$forceUpdate(), 200);
     }
@@ -110,6 +110,7 @@ export default class EditScriptItem extends ScriptEditor{
         this.model.timeOffset = this.timeOffset;
         this.model.active= !!this.active;
         this.model.sendInput = !!this.sendInput;
+        this.model.coord = { x: this.coord.x || 0, y: this.coord.y || 0 }
         this.close();
         return this.model;
     }

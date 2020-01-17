@@ -20,14 +20,14 @@
         </div>
         <q-input v-else-if="scriptType =='file-field'" :dense="simply"  :label="label" :value="value" @keydown.prevent @click="browse"></q-input>
         <div class="row" v-if="scriptType == 'mouse' && ! simply">
-            <div class="col">
-                <q-input label="X" type="number" dense square outlined :value="coord.x" @input="val=>setCoord(val, coord.y)"></q-input>
+            <div class="col-3">
+                <q-input label="X" type="number" :min="0" :max="108000" dense square outlined :value="coord.x" @input="val=>setCoord(val, coord.y)"></q-input>
             </div>
-            <div class="col">
-                <q-input label="Y" type="number" dense square outlined :value="coord.y" @input="val=>setCoord(coord.x, val)"></q-input>
+            <div class="col-3">
+                <q-input label="Y" type="number" :min="0" :max="108000" dense square outlined :value="coord.y" @input="val=>setCoord(coord.x, val)"></q-input>
             </div>
-            <div class="col justify-center vertical-middle text-center">
-                <q-btn dense :label="lang.setcoord" color="primary"></q-btn>
+            <div class="col-6 justify-center vertical-middle text-center">
+                <q-btn :label="lang.setcoord" color="primary"></q-btn>
             </div>
         </div>
   </div>
@@ -47,8 +47,8 @@ export default class FlexibleInput extends Vue{
     @Prop() type: ScriptType = ScriptType.DO_NOTHING;
     @Prop() value: string = "";
     @Prop({
-        default: new Coord()
-    }) coord: Coord = new Coord();
+        default: { x:0, y: 0}
+    }) coord: Coord = { x:0, y: 0};
     @Prop() simply: boolean = false;
     @Prop() label?: string;
     get scriptType(){
@@ -83,7 +83,7 @@ export default class FlexibleInput extends Vue{
 
     get mouseValue(){
         if (this.simply)
-            return `${this.value}[${this.coord.x || 0}:${this.coord.y || 0}]`
+            return `${this.value || ''}[${this.coord.x || 0}:${this.coord.y || 0}]`
         else return this.value;
     }
 
