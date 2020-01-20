@@ -7,6 +7,7 @@ namespace Autoquit2.Models {
         public KeyCombination RecordHotkey { get; set; } = null;
         public KeyCombination TopHotkey { get; set; } = null;
         public bool ShowMouseCoordinate { get; set; } = false;
+        public bool AutoMerge { get; set; } = true;
         public int TypeSpeed { get; set; } = 10;
         public string Language { get; set; } = "en-US";
         public int Port { get; set; } = 7709;

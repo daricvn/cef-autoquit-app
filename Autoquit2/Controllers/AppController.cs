@@ -26,7 +26,9 @@ namespace Autoquit2.Controllers {
         }
         [Get]
         public IResponse GetConfig() {
-            return Response.WithSuccess(Settings.GetConfig());
+            Recorder.Initialize();
+            Program.Settings = Settings.GetConfig();
+            return Response.WithSuccess(Program.Settings);
         }
 
         [Post]
@@ -34,6 +36,8 @@ namespace Autoquit2.Controllers {
             if (model != null ) {
                 var path = Path.Combine(Constant.AppPath, Constant.APP_SETTINGS_PATH);
                 File.WriteAllText(path, JsonConvert.SerializeObject(model));
+                Program.Settings = model;
+                return Response.Success;
             }
             return Response.BadRequest;
         }
@@ -48,6 +52,7 @@ namespace Autoquit2.Controllers {
                 }
                 var content = File.ReadAllText(path);
                 Program.Established = true;
+                Program.Language = JsonConvert.DeserializeObject<Dictionary<string, string>>(content);
                 return Response.WithSuccess(content);
             }
             catch(Exception ex ) {
@@ -65,6 +70,10 @@ namespace Autoquit2.Controllers {
         [Put("force_exit")]
         public IResponse ForceExit() {
             Program.ForceClose = true;
+            try {
+                Recorder.Dispose();
+            }
+            catch (Exception) { }
             Application.Exit();
             return Response.Success;
         }

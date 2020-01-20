@@ -199,6 +199,8 @@ namespace HttpService
                             output.Write(bytes, 0, bytes.Length);
                         }
                         response.StatusCode = result.Status;
+                        if ( !string.IsNullOrEmpty(result.Message) )
+                            response.StatusDescription = result.Message;
                         response.KeepAlive = false;
                     }
                 }

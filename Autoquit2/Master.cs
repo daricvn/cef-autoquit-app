@@ -43,7 +43,6 @@ namespace Autoquit2
 
         private void Master_Load(object sender, EventArgs e)
         {
-
         }
 
         private void Master_FormClosing( object sender, FormClosingEventArgs e ) {

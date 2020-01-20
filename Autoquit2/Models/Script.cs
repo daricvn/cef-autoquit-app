@@ -14,6 +14,7 @@ namespace Autoquit2.Models {
         public double BoundX { get; set; }
         public double BoundY { get; set; }
         public string ResolutionApp { get; set; }
+        public int? Version { get; set; }
         public List<ScriptItem> Scripts { get; set; } = new List<ScriptItem>();
     }
 }

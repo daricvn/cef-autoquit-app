@@ -70,8 +70,8 @@ export default class EditScriptItem extends ScriptEditor{
     model: ScriptItem = new ScriptItem();
     @State("lang") lang: any;
     @Prop() typeList!: any[];
-    @Prop() min?: number;
-    @Prop() max?: number;
+    @Prop({ default: 0 }) min?: number;
+    @Prop({ default: 1 }) max?: number;
     order: number = 1;
     eventType: ScriptType = ScriptType.DO_NOTHING;
     keyName: string= '';

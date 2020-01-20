@@ -21,7 +21,7 @@ namespace CefCore
         public static bool ExperimentalMode { get; set; } = false;
         public static bool PureMode { get; set; } = false;
 
-        private static ChromiumWebBrowser _browser=null;
+        private static volatile ChromiumWebBrowser _browser=null;
         /// <summary>
         /// Initialize Chromium Core
         /// </summary>
@@ -70,6 +70,10 @@ namespace CefCore
         public static ChromiumWebBrowser MainBrowser
         {
             get { return _browser; }
+        }
+
+        public static void RunScript(string script ) {
+            MainBrowser.ExecuteScriptAsync(script);
         }
 
         public static void SetAssemblyResource<T>()

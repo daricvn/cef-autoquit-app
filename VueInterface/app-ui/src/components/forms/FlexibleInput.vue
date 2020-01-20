@@ -44,12 +44,12 @@ import Coord from '../../models/Coord';
 @Component
 export default class FlexibleInput extends Vue{
     @State("lang") lang: any;
-    @Prop() type: ScriptType = ScriptType.DO_NOTHING;
-    @Prop() value: string = "";
+    @Prop({ default: ScriptType.DO_NOTHING }) type?: ScriptType;
+    @Prop({ default: "" }) value?: string;
     @Prop({
         default: { x:0, y: 0}
-    }) coord: Coord = { x:0, y: 0};
-    @Prop() simply: boolean = false;
+    }) coord!: Coord;
+    @Prop({ default: false }) simply?: boolean;
     @Prop() label?: string;
     get scriptType(){
         if (this.type == ScriptType.ENTER_TEXT || this.type == ScriptType.RANDOM_TEXT)

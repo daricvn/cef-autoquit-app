@@ -9,8 +9,7 @@ namespace Autoquit2.Models {
         public int Index { get; set; }
         public string EventType { get; set; }
         public string KeyName { get; set; }
-        public long? X { get; set; }
-        public long? Y { get; set; }
+        public Coord Coord { get; set; }
         public long TimeOffset { get; set; }
         public bool Active { get; set; }
         public bool SendInput { get; set; }

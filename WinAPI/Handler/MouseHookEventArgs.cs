@@ -26,5 +26,6 @@ namespace WinAPI.Handler
         LEFT_CLICK,
         RIGHT_CLICK,
         MIDDLE_CLICK,
+        NONE
     }
 }

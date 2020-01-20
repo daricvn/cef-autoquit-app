@@ -22,7 +22,7 @@ namespace WinAPI {
         [DllImport("user32.dll", SetLastError = true)]
         private static extern bool ShowWindow( IntPtr wHnd, int cmdShow );
         [DllImport("user32.dll", SetLastError = true)]
-        internal static extern int GetWindowLong( IntPtr hWnd, int nIndex );
+        public static extern int GetWindowLong( IntPtr hWnd, int nIndex );
         [DllImport("user32")]
         [return: MarshalAs(UnmanagedType.Bool)]
         private static extern bool EnumChildWindows( IntPtr window, WindowEnumProc callback, IntPtr lParam );
@@ -40,7 +40,7 @@ namespace WinAPI {
         public static extern int GetClassName( IntPtr hWnd, StringBuilder lpClassName, int nMaxCount );
 
         [DllImport("user32.dll")]
-        internal static extern int SetWindowLong( IntPtr hWnd, int nIndex, UInt32 dwNewLong );
+        public static extern int SetWindowLong( IntPtr hWnd, int nIndex, UInt32 dwNewLong );
         public static List<IntPtr> GetAllChildHandles( IntPtr mainHandle ) {
             List<IntPtr> childHandles = new List<IntPtr>();
 

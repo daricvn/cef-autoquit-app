@@ -1,4 +1,5 @@
-﻿using CefCore;
+﻿using Autoquit2.Models;
+using CefCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,6 +18,15 @@ namespace Autoquit2
 
         public static volatile bool ForceClose = false;
         public static volatile bool Established = false;
+        public static volatile Dictionary<string, string> Language = null;
+        public static volatile AppSettings Settings = null;
+
+        public static string GetString(string key ) {
+            if ( Language.ContainsKey(key) )
+                return Language[key];
+            return key;
+        }
+
         private static string Url
         {
             get

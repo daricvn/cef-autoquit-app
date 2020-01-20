@@ -13,6 +13,7 @@ namespace HttpService.Interfaces
     {
         int Status { get; set; }
         object Data { get; set; }
+        string Message { get; set; }
     }
     
 }

@@ -1,8 +1,11 @@
-﻿using Autoquit2.Models;
+﻿using Autoquit2._App_Data;
+using Autoquit2.Models;
 using Autoquit2.Services;
+using CefCore;
 using HttpService;
 using HttpService.Core;
 using HttpService.Interfaces;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -11,13 +14,23 @@ using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using WinAPI;
+using WinAPI.Handler;
+using WinAPI.Hook;
+using WinAPI.Utility;
 
 namespace Autoquit2.Controllers {
     [Route("script")]
     public class ScriptController: Controller {
+        private const string ScriptFileExtension = "Autoquit Script Files (*.script)|*.script";
+        private readonly Random rnd;
+        public ScriptController() {
+            rnd = new Random();
+        }
+
         [Get("processes")]
         public IResponse GetProcess(bool deep=false) {
             var notepad = Process.GetProcessesByName("notepad")?.AsEnumerable();
@@ -103,7 +116,7 @@ namespace Autoquit2.Controllers {
                 dialog.CheckFileExists = true;
                 dialog.Multiselect = false;
                 dialog.RestoreDirectory = true;
-                dialog.Filter = "Autoquit Script Files (*.script)|*.script";
+                dialog.Filter = ScriptFileExtension;
                 var result = dialog.ShowDialog();
                 if ( result == DialogResult.OK ) {
                     path = dialog.FileName;
@@ -111,13 +124,178 @@ namespace Autoquit2.Controllers {
             }));
             if ( path != null ) {
                 Script script = Compressor.ReadObject<Script>(path);
-                if (script.Scripts.Count>0 && 
+                if (script.Version == null || script.Version < Constant.Build || (
+                    script.Scripts.Count>0 && 
                     script.Scripts
-                        .FirstOrDefault(x=>x.EventType.StartsWith("LEFT") || x.EventType.StartsWith("RIGHT")) !=null)
+                        .FirstOrDefault(x=>x.EventType.StartsWith("LEFT") || x.EventType.StartsWith("RIGHT")) !=null))
                     Migrator.MigrateScript(ref script);
                 return Response.WithSuccess(new { path, script });
             }
             return Response.NoContent;
+        }
+
+        [Post("save")]
+        public IResponse Save(string path, Script script) {
+            if (script != null ) {
+                if ( string.IsNullOrEmpty(path) ) {
+                    return this.SaveAs(script);
+                }
+                if (script.Version == null || script.Version < Constant.Build) {
+                    var result = MessageBox.Show(Program.GetString("confirm_override_old_script"), Program.GetString("title_override_old_script"), MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
+                    if (result == DialogResult.No ) {
+                        return Response.NotModified;
+                    }
+                    Migrator.MigrateScript(ref script);
+                }
+                script.Version = Constant.Build;
+                Compressor.WriteObject(path, JsonConvert.SerializeObject(script));
+                return Response.Success;
+            }
+            return Response.BadRequest;
+        }
+        [Post("saveas")]
+        public IResponse SaveAs( Script script ) {
+            if ( script != null ) {
+                if ( script.Version == null || script.Version < Constant.Build ) {
+                    Migrator.MigrateScript(ref script);
+                }
+                script.Version = Constant.Build;
+                SaveFileDialog dialog = new SaveFileDialog();
+                dialog.Filter = ScriptFileExtension;
+                dialog.CheckPathExists = true;
+                dialog.DefaultExt = ".script";
+                var result = dialog.ShowDialog();
+                if (result == DialogResult.OK ) {
+                    var fileName = dialog.FileName;
+                    Compressor.WriteObject(fileName, JsonConvert.SerializeObject(script));
+                    return Response.WithSuccess(fileName);
+                }
+                return Response.NotModified;
+            }
+            return Response.BadRequest;
+        }
+        [Post("record")]
+        public IResponse StartRecord(int pid) {
+
+            var process = pid == 0 ? null : Process.GetProcessById(pid);
+            if ( process == null && pid != 0)
+                return Response.NotFound;
+            int lastOperation = DateTime.Now.Millisecond;
+            Recorder.Start(result => {
+                var item = new ScriptItem();
+                item.Active = true;
+                item.TimeOffset = DateTime.Now.Millisecond - lastOperation;
+                lastOperation = DateTime.Now.Millisecond;
+                if (result is MouseHookEventArgs) {
+                    var mouseArgs = (MouseHookEventArgs)result;
+                    var name = Enum.GetName(typeof(MouseKey), mouseArgs.Key);
+                    if ( name.EndsWith("_CLICK") ) {
+                        item.EventType= Constant.ENV_MOUSE_CLICK;
+                    }
+                    if ( name.EndsWith("_DBCLICK") )
+                        item.EventType = Constant.ENV_MOUSE_DBCLICK;
+                    if ( name.EndsWith("_UP") )
+                        item.EventType = Constant.ENV_MOUSE_UP;
+                    if ( name.EndsWith("_DOWN") )
+                        item.EventType = Constant.ENV_MOUSE_DOWN;
+                    item.KeyName = name[0].ToString().ToUpper();
+                    if (process!=null) {
+                        var coord = WinAPI.Core.RetrieveCoord(process.MainWindowHandle).Split(':');
+                        item.Coord = new Coord(int.Parse(coord[0]), int.Parse(coord[1]));
+                    }
+                    else {
+                        var point = MouseHook.GetCursorPosition();
+                        item.Coord = new Coord(point.x, point.y);
+                    }
+                }
+                if (result is KeyHookEventArgs ) {
+                    var keyArgs = (KeyHookEventArgs)result;
+                    var name = Enum.GetName(typeof(WinAPI.Handler.KeyType), keyArgs.Type);
+                    item.EventType = name;
+                    var keyCode = ChromiumKeyConverter.GetKeyCode((System.Windows.Forms.Keys)Enum.ToObject(typeof(System.Windows.Forms.Keys), (int)keyArgs.Key));
+                    item.KeyName = Enum.GetName(typeof(KeyCode), keyCode);
+                }
+                if ( !string.IsNullOrEmpty(item.EventType) ) {
+                    Chromium.RunScript($"window.addItem('{JsonConvert.SerializeObject(item)}')");
+                }
+            });
+            return Response.Success;
+        }
+        [Post("stoprecord")]
+        public IResponse StopRecord() {
+            Recorder.Stop();
+            return Response.Success;
+        }
+
+        [Post("play")]
+        public IResponse Run(IntPtr pid, ScriptItem item ) {
+            try {
+                if ( IsMouseEvent(item.EventType) ) {
+                    var mouseKey = MouseKey.NONE;
+                    var strName = "";
+                    if ( item.KeyName.StartsWith("R") )
+                        strName = "RIGHT";
+                    if ( item.KeyName.StartsWith("M") )
+                        strName = "MIDDLE";
+                    if ( item.KeyName.StartsWith("L") )
+                        strName = "LEFT";
+                    var index = item.EventType.IndexOf("_") + 1;
+                    Enum.TryParse($"{strName}_{item.EventType.Substring(index)}", out mouseKey);
+                    if ( mouseKey != MouseKey.NONE && item.Coord != null ) {
+                        if ( item.SendInput )
+                            Recorder.SendMouse(pid, mouseKey, item.Coord.X, item.Coord.Y);
+                        else
+                            WinAPI.Core.SendMouseEx(pid, mouseKey, item.Coord.X, item.Coord.Y);
+                    }
+                }
+                else if ( item.EventType.StartsWith("KEY") ) {
+                    if ( Enum.TryParse(item.KeyName, out KeyCode keyCode) && Enum.TryParse(item.EventType, out KeyType keyType) ) {
+                        var key = ChromiumKeyConverter.GetKey(item.KeyName);
+                        SendKey(pid, keyType, key, item.SendInput);
+                    }
+                }
+                else if ( item.EventType == Constant.ENV_ENTER_TEXT || item.EventType == Constant.ENV_ENTER_SECRET
+                    || item.EventType == Constant.ENV_RANDOM_TEXT ) {
+                    var keyName = item.KeyName;
+                    if ( item.EventType == Constant.ENV_RANDOM_TEXT && keyName.Contains(";") ) {
+                        var keys = keyName.Split(';');
+                        if ( keys.Length == 1 )
+                            keyName = keys[0];
+                        else {
+                            keyName = keys[rnd.Next(0, keys.Length - 1)];
+                        }
+                    }
+                    Task.Run(async () => {
+                        foreach ( char c in keyName ) {
+                            WinAPI.Keys key;
+                            if ( (key = KeyMapper.Get(c, out bool shift)) != WinAPI.Keys.None ) {
+                                SendKey(pid, KeyType.KEY_PRESS, key.ToWindowsKey(), item.SendInput);
+                                if ( Program.Settings.TypeSpeed > 0 && keyName.Length >= 50 ) {
+                                    await Task.Delay(Program.Settings.TypeSpeed / 2);
+                                }
+                            }
+                        }
+                    }).Wait();
+                }
+                return Response.Success;
+            }
+            catch (Exception e ) {
+                return Response.WithError(500, e.Message);
+            }
+        }
+
+        private void SendKey(IntPtr pid,KeyType keyType, System.Windows.Forms.Keys key, bool sendInput) {
+            if ( !sendInput ) {
+                WinAPI.Core.SendKeyboard(pid, keyType, (WinAPI.Keys)Enum.ToObject(typeof(WinAPI.Keys), (int)key));
+            }
+            else {
+                Recorder.SendKeys(keyType, key);
+            }
+        }
+
+        private bool IsMouseEvent(string text ) {
+            return text.Contains("CLICK") 
+                || (!text.Contains("KEY") && (text.Contains("UP") || text.Contains("DOWN")));
         }
 
         private byte[] GetPngFromIcon(Icon icon ) {
@@ -127,6 +305,7 @@ namespace Autoquit2.Controllers {
                 return ms.ToArray();
             }
         }
+
         private byte[] GetBytesFromIcon(Icon icon ) {
             using (var ms= new MemoryStream() ) {
                 icon.Save(ms);

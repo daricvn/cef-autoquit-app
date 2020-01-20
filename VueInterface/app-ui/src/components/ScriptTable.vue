@@ -5,8 +5,21 @@
              <q-list separator bordered dense>
                 <q-item>
                     <q-item-section>
-                        <q-item-label>
-                            <q-checkbox :value="isCheckedAll" @input="toggleCheckAll()"></q-checkbox>
+                        <q-item-label style="height: 41px;">
+                            <div class="row">
+                                <div class="col-1">
+                                    <q-checkbox :value="isCheckedAll" @input="toggleCheckAll()"></q-checkbox>
+                                </div>
+                                <div class="col-7"></div>
+                                <div class="col-2" v-if="list.length>0">
+                                    <q-checkbox :value="isActiveAll" @input="toggleActiveAll()" color="green" class="round">
+                                        <q-tooltip>{{ lang.active }}</q-tooltip>
+                                    </q-checkbox>
+                                    <q-checkbox :value="isManipulatedAll" @input="toggleManipulatedAll()" color="red" class="round" :disable="isDisableAll">
+                                        <q-tooltip>{{ lang.manipulateMode }}</q-tooltip>
+                                    </q-checkbox>
+                                </div>
+                            </div>
                         </q-item-label>
                     </q-item-section>
                 </q-item>
@@ -131,7 +144,7 @@ export default class ScriptTable extends ScriptEditor{
     lastDragIndex: number =-1;
     selectedItem!: ScriptItem;
     mounted() {
-        (window as any)['addScript'] = (json: string)=>{
+        (window as any)['addItem'] = (json: string)=>{
             let item = JSON.parse(json) as ScriptItem;
             if (item)
                 this.list.push(item);
@@ -183,11 +196,35 @@ export default class ScriptTable extends ScriptEditor{
         return this.selectedItems.length == this.list.length
     }
 
+    get isActiveAll(){
+        return this.list.filter(x=>x.active).length == this.list.length;
+    }
+
+    get isDisableAll(){
+        return this.list.filter(x=>!x.active).length == this.list.length;
+    }
+
+    get isManipulatedAll(){
+        return this.list.filter(x=>x.sendInput).length == this.list.length;
+    }
+
     toggleCheckAll(){
         if (this.isCheckedAll)
             this.selectedItems.splice(0, this.selectedItems.length);
         else
             this.selectedItems.splice(0, this.selectedItems.length, ...this.list);
+    }
+
+    toggleActiveAll(){
+        const check = this.isActiveAll;
+        for (let i=0; i< this.list.length; i++)
+            this.list[i].active = !check;
+    }
+    toggleManipulatedAll(){
+        const check = this.isManipulatedAll;
+        for (let i=0; i< this.list.length; i++)
+            if (this.list[i].active)
+                this.list[i].sendInput = !check;
     }
 
     isDirty(row: ScriptItem){

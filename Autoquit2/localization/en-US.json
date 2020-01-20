@@ -73,6 +73,7 @@
   "MOUSE_UP": "Mouse up",
   "MOUSE_DOWN": "Mouse down",
   "MOUSE_CLICK": "Mouse click",
+  "MOUSE_DBCLICK": "Mouse double-click",
   "KEY_UP": "Key up",
   "KEY_DOWN": "Key down",
   "KEY_PRESS": "Key press",
@@ -82,6 +83,8 @@
   "FROM_FILE": "From file...",
   "DO_NOTHING": "Do nothing",
 
+  "title_override_old_script": "Migration Confirm",
+
   "confirm_delete_title": "Deleting",
   "confirm_delete": "Are you sure want to delete all selected item(s)?",
   "confirm_exit_title": "Exit Program",
@@ -90,6 +93,7 @@
   "confirm_clear": "Are you sure want to clear all items?",
   "confirm_undo_title": "Undo Changes",
   "confirm_undo": "Are you sure want to undo all changes?",
+  "confirm_override_old_script": "You are overriding an old version of this script. Once migrated, you will not able to open this script in older version (version 1) of this application, perhaps you may want to save a copy of it somewhere else. Are you sure want to continue?",
 
   "message_closing": "Terminating all pending operations...",
   "message_saved": "Saved successfully.",
