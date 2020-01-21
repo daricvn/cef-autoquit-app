@@ -7,7 +7,7 @@ export default class AppService{
         return axios.get(`${config.URL}/config`);
     }
     static saveSettings(settings: AppSettings): AxiosPromise<any> {
-        return axios.post(`${config.URL}/config`, settings);
+        return axios.post(`${config.URL}/config`, { model: settings, test:"test"});
     }
     static getLanguage(fileName: string): AxiosPromise<any>{
         return axios.get(`${config.URL}/config/language?name=${fileName}`);

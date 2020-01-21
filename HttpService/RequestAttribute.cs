@@ -20,6 +20,6 @@ namespace HttpService
 
     public enum HttpMethod
     {
-        GET, POST, PUT, DELETE
+        GET, POST, PUT, DELETE, OPTIONS, NONE
     }
 }

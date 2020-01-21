@@ -2,6 +2,7 @@ import Vue from 'vue';
 import Vuex from 'vuex';
 import {Dark} from 'quasar';
 import { AppSettings } from '@/models/AppSettings';
+import AppService from '@/services/AppService';
 
 Vue.use(Vuex);
 
@@ -25,9 +26,13 @@ export default new Vuex.Store({
     setSettings(state, settings){
       state.settings = settings;
     },
-    setDarkTheme(state, value){
+    setDarkTheme(state, value, dontSave=false){
       state.darkTheme=value;
       Dark.set(value);
+      if (!dontSave && state.settings){
+        state.settings.darkTheme = value;
+        AppService.saveSettings(state.settings)
+      }
     },
     setLoadState(state, value){
       state.loadState = value;

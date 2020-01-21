@@ -29,7 +29,9 @@ namespace HttpService
                         var url = route.Path + prepend + attr.Path;
                         if (url[url.Length - 1] != '/')
                             url += "/";
-                        HttpService.Mapping.Add(url.Replace("//","/"), new ControllerResult()
+                        if ( !HttpService.Mapping.ContainsKey(url) )
+                            HttpService.Mapping.Add(url, new List<ControllerResult>());
+                        HttpService.Mapping[url].Add(new ControllerResult()
                         {
                             method = attr.Method,
                             func= method.Name,
@@ -44,6 +46,6 @@ namespace HttpService
                 catch (Exception e) { }
             }
         }
-        
+
     }
 }

@@ -8,8 +8,8 @@ namespace HttpService {
     public static class Container {
         public static T GetController<T>() where T: Controller {
             foreach (var item in HttpService.Mapping ) {
-                if ( item.Value.target is T )
-                    return (T) item.Value.target;
+                if ( item.Value.All(x=>x.target is T))
+                    return (T) item.Value.FirstOrDefault()?.target;
             }
             return null;
         }

@@ -58,10 +58,10 @@ export default class App extends Vue {
     const settings = json as AppSettings;
     if (settings.port)
       config.PORT = settings.port;
-    console.log(json);
-    console.log(settings);
-    this.setDarkTheme(!!settings.darkTheme);
+    // console.log(json);
+    // console.log(settings);
     this.setSettings(settings);
+    this.setDarkTheme(!!settings.darkTheme, true);
     AppService.getLanguage(settings.language+"").then((response)=>{
           try{
             let language= response.data;

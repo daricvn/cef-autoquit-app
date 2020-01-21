@@ -14,7 +14,7 @@ namespace Autoquit2.Services {
             var path = Path.Combine(Constant.AppPath, Constant.APP_SETTINGS_PATH);
             AppSettings settings = null;
             if ( File.Exists(path) ) {
-                settings = Compressor.ReadObject<AppSettings>(path);
+                settings = JsonConvert.DeserializeObject<AppSettings>(File.ReadAllText(path));
                 if ( settings == null ) {
                     settings = new AppSettings();
                     File.WriteAllText(path, JsonConvert.SerializeObject(settings));

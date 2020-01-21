@@ -32,7 +32,7 @@ namespace Autoquit2.Controllers {
         }
 
         [Post]
-        public IResponse SaveConfig(AppSettings model) {
+        public IResponse SaveConfig(AppSettings model, string test) {
             if (model != null ) {
                 var path = Path.Combine(Constant.AppPath, Constant.APP_SETTINGS_PATH);
                 File.WriteAllText(path, JsonConvert.SerializeObject(model));
@@ -68,14 +68,19 @@ namespace Autoquit2.Controllers {
         }
 
         [Put("force_exit")]
-        public IResponse ForceExit() {
+        public void ForceExit() {
             Program.ForceClose = true;
             try {
                 Recorder.Dispose();
             }
             catch (Exception) { }
+            //try {
+            //    Master.Form.Invoke((MethodInvoker)(() => {
+            //        Chromium.Shutdown();
+            //    }));
+            //}
+            //catch ( Exception ) { }
             Application.Exit();
-            return Response.Success;
         }
 
     }

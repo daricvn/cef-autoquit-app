@@ -26,14 +26,17 @@ namespace Autoquit2.Services {
                 return _keyHash;
             }
         }
-        public static bool WriteObject( string path, object content ) {
+        public static bool WriteObject( string path, object content , bool noOpt = false) {
             try {
                 using ( var fs = new FileStream(path, FileMode.Create, FileAccess.Write) )
                 using ( var df = new DeflateStream(fs, CompressionLevel.Fastest) ) {
                     var obj = JsonConvert.SerializeObject(content);
-                    var encContent = _appendCode + Encrypt(obj);
+                    var encContent = obj;
+                    if (!noOpt)
+                        encContent =_appendCode + Encrypt(obj);
                     byte[] bytes = Encoding.UTF8.GetBytes(encContent);
                     df.Write(bytes, 0, bytes.Length);
+                    df.FlushAsync().Wait();
                 }
             }
             catch ( Exception ) {
@@ -41,7 +44,7 @@ namespace Autoquit2.Services {
             }
             return true;
         }
-        public static T ReadObject<T>( string path ) {
+        public static T ReadObject<T>( string path , bool noOpt = false) {
             try {
                 int count = 0;
                 byte[] bytes;
@@ -57,7 +60,7 @@ namespace Autoquit2.Services {
                     var str = Encoding.UTF8.GetString(bytes);
                     if ( str != null ) {
                         // Compatibility with old one
-                        if ( !str.StartsWith(_appendCode) )
+                        if ( !str.StartsWith(_appendCode) || noOpt)
                             return JsonConvert.DeserializeObject<T>(str);
                         else {
                             var dec = Decrypt(str.Substring(_appendCode.Length));

@@ -160,13 +160,18 @@ namespace Autoquit2.Controllers {
                     Migrator.MigrateScript(ref script);
                 }
                 script.Version = Constant.Build;
-                SaveFileDialog dialog = new SaveFileDialog();
-                dialog.Filter = ScriptFileExtension;
-                dialog.CheckPathExists = true;
-                dialog.DefaultExt = ".script";
-                var result = dialog.ShowDialog();
-                if (result == DialogResult.OK ) {
-                    var fileName = dialog.FileName;
+                string fileName = null;
+                Master.Form.Invoke((MethodInvoker)(() => {
+                    SaveFileDialog dialog = new SaveFileDialog();
+                    dialog.Filter = ScriptFileExtension;
+                    dialog.CheckPathExists = true;
+                    dialog.DefaultExt = ".script";
+                    var result = dialog.ShowDialog();
+                    if ( result == DialogResult.OK ) {
+                        fileName = dialog.FileName;
+                    }
+                }));
+                if (!string.IsNullOrEmpty(fileName)) {
                     Compressor.WriteObject(fileName, JsonConvert.SerializeObject(script));
                     return Response.WithSuccess(fileName);
                 }

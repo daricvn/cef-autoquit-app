@@ -16,7 +16,7 @@ namespace HttpService
 {
     public class HttpService {
         public static JsonSerializerSettings SerializerOptions { get; } = new JsonSerializerSettings();
-        public static Dictionary<string, ControllerResult> Mapping { get; } = new Dictionary<string, ControllerResult>();
+        public static Dictionary<string, List<ControllerResult>> Mapping { get; } = new Dictionary<string, List<ControllerResult>>();
         public static HttpListener Server { get; } = new HttpListener();
         public static string Scheme { get; set; } = "http";
         public static string Host { get; set; } = "*";
@@ -107,11 +107,12 @@ namespace HttpService
             if (Mapping.ContainsKey(url) && validRequest)
             {
                 IResponse result = null;
-                var controller = Mapping[url];
-                if (request.HttpMethod.ToUpper() == "GET" && controller.method == HttpMethod.GET ||
+                var controller = Mapping[url].Where(x=>x.method == GetHttpMethod(request.HttpMethod.ToUpper())).FirstOrDefault();
+                if (controller !=null && (
+                    request.HttpMethod.ToUpper() == "GET" && controller.method == HttpMethod.GET ||
                     request.HttpMethod.ToUpper() == "POST" && controller.method == HttpMethod.POST ||
                     request.HttpMethod.ToUpper() == "PUT" && controller.method == HttpMethod.PUT ||
-                    request.HttpMethod.ToUpper() == "DELETE" && controller.method == HttpMethod.DELETE)
+                    request.HttpMethod.ToUpper() == "DELETE" && controller.method == HttpMethod.DELETE))
                 {
 
                         var queries = request.QueryString.AllKeys;
@@ -214,7 +215,7 @@ namespace HttpService
         }
 
         private static bool IsBasicType(Type type ) {
-            return type.IsPrimitive || type == typeof(string) || type == typeof(DateTime);
+            return type.IsPrimitive || type == typeof(string) || type == typeof(DateTime) || type == typeof(decimal);
         }
 
         private static object GetObject(Dictionary<string, object> dict, ParameterInfo[] paramInfo) {
@@ -223,31 +224,45 @@ namespace HttpService
             var keys = dict.Keys.ToList();
             List<string> convertedKeys = null;
             foreach ( var info in paramInfo )
-                if (!IsBasicType(info.ParameterType) && info.ParameterType.IsClass && info.ParameterType.IsPublic && !info.ParameterType.IsAbstract ) {
+                if ( !IsBasicType(info.ParameterType) && info.ParameterType.IsClass && info.ParameterType.IsPublic && !info.ParameterType.IsAbstract ) {
+                    if ( dict.ContainsKey(info.Name) && !dict[info.Name].GetType().IsPrimitive ) {
+                        try {
+                            var obj = JsonConvert.DeserializeObject(JsonConvert.SerializeObject(dict[info.Name]), info.ParameterType);
+                            list.Add(obj);
+                            dict.Remove(info.Name);
+                            continue;
+                        }
+                        catch ( Exception ) { }
+                    }
                     var props = info.ParameterType.GetProperties();
                     if ( props != null ) {
-                        var obj = Convert.ChangeType(Activator.CreateInstance(info.ParameterType), info.ParameterType);
-                        converted += TryConvert(dict, out obj, out convertedKeys);
-                        if ( converted > 0 ) {
-                            foreach ( var key in convertedKeys )
-                                keys.Remove(key);
-                            return obj;
+                        var propsName = props?.Where(x => x.PropertyType.IsPublic && x.CanWrite).Select(x => x.Name.ToLower()).ToList();
+                        if ( propsName != null && propsName.Count > 0 && propsName.Intersect(keys.Select(x=>x.ToLower()).ToList()).Count() > 0 ) {
+                            var obj = Convert.ChangeType(Activator.CreateInstance(info.ParameterType), info.ParameterType);
+                            //converted += TryConvert(dict, out obj, out convertedKeys);
+                            //if ( converted > 0 ) {
+                            //    foreach ( var key in convertedKeys )
+                            //        keys.Remove(key);
+                            //    return obj;
+                            //}
+                            foreach ( var prop in props ) {
+                                var idx = keys.FindIndex(x => x.ToLower() == prop.Name.ToLower());
+                                if ( idx >= 0 && dict[keys[idx]] != null && prop.CanWrite ) {
+                                    prop.SetValue(obj, Convert.ChangeType(dict[keys[idx]], prop.PropertyType));
+                                    dict.Remove(keys[idx]);
+                                }
+                            }
+                            list.Add(obj);
                         }
-                        break;
+                    }
+
+                }
+                else {
+                    if ( dict.ContainsKey(info.Name) && IsBasicType(dict[info.Name].GetType()) ) {
+                        list.Add(dict[info.Name]);
+                        dict.Remove(info.Name);
                     }
                 }
-            if ( converted < dict.Keys.Count ) {
-                foreach ( var info in paramInfo ) {
-                    if ( keys.Contains(info.Name) ) {
-                        list.Add(Convert.ChangeType(dict[info.Name], info.ParameterType));
-                    }
-                    else if ( info.HasDefaultValue )
-                        if ( info.ParameterType == typeof(int) )
-                            list.Add(Convert.ToInt32(info.DefaultValue));
-                        else
-                            list.Add(info.DefaultValue);
-                }
-            }
             return list;
         }
 
@@ -286,6 +301,13 @@ namespace HttpService
                 }
             }
             return 0;
+        }
+
+        private static HttpMethod GetHttpMethod(string method ) {
+            if (Enum.TryParse(method, out HttpMethod http) ) {
+                return http;
+            }
+            return HttpMethod.NONE;
         }
     }
 
