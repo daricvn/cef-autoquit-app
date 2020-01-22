@@ -5,7 +5,7 @@ export class ScriptItem{
     index?: Number;
     eventType?: ScriptType;
     keyName?: any;
-    timeOffset?: Number;
+    timeOffset?: number;
     active?: Boolean;
     sendInput?: Boolean;
     dirty?: Boolean;

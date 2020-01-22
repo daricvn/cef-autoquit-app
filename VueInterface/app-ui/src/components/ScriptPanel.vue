@@ -56,7 +56,7 @@
         <q-slide-transition>
           <q-select
             dense
-            v-if="model"
+            v-if="model && model.pid>0"
             multiple
             @filter="onSubDropdownOpen"
             style="width: 100%;"
@@ -141,23 +141,23 @@ export default class ScriptPanel extends Vue {
   process: Array<Process> = [];
   options: Array<String | Process> = [];
   subOptions:any[] = [];
-  model: Process | null = null;
+  model: Process = { pid: -1 };
   scanCooldown: boolean = false;
   subProcess:any[] = [];
   loadedPid: number | undefined;
   @State("filePath") path: string | undefined;
   @State("lang") ui: any;
   @State("script") script: any;
-  @State("player") playerState?: PlayerState;
+  @State("player") playerState!: PlayerState;
   @Mutation("setPlayerState") setPlayerState: any;
   @Mutation("setScript") setScript: any;
   @Mutation("setPath") setPath: any;
   mounted() {
-    this.options.push({
-      pid: 1,
-      name: "Autoquit 1",
-      fileName: "Autoquit.exe"
-    });
+    // this.options.push({
+    //   pid: 1,
+    //   name: "Autoquit 1",
+    //   fileName: "Autoquit.exe"
+    // });
   }
 
     @Watch("subOptions")
@@ -172,8 +172,10 @@ export default class ScriptPanel extends Vue {
     @Watch("model")
     onSelected(){
         if (this.model){
-            this.subProcess=[];
-            this.getSubProcess();
+          this.playerState.pid=this.model.pid;
+          this.setPlayerState(this.playerState);
+          this.subProcess=[];
+          this.getSubProcess();
         }
     }
 
@@ -183,6 +185,7 @@ export default class ScriptPanel extends Vue {
       if (this.subProcess) {
         this.playerState.targetPid = this.subProcess;
       } else this.playerState.targetPid = [];
+      this.setPlayerState(this.playerState);
     }
   }
 
@@ -238,7 +241,6 @@ export default class ScriptPanel extends Vue {
             update();
         })
         .catch(() => {
-          this.model = null;
           this.scanCooldown = false;
           this.$q.dialog({
             title: this.ui

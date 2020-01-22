@@ -16,15 +16,15 @@
         </q-tabs>
         <q-separator />
         <q-tab-panels v-model="tab" animated>
-            <q-tab-panel name="control" class="overflow-hidden" style="max-height: 55vh">
+            <q-tab-panel name="control" class="overflow-hidden" style="max-height: 53vh">
                 <control-tab />
             </q-tab-panel>
 
-            <q-tab-panel name="settings" style="max-height: 55vh">
+            <q-tab-panel name="settings" style="max-height: 53vh">
                 <settings-tab />
             </q-tab-panel>
 
-            <q-tab-panel name="about" style="max-height: 55vh">
+            <q-tab-panel name="about" style="max-height: 53vh">
                 <about-tab />
             </q-tab-panel>
             </q-tab-panels>
@@ -33,7 +33,7 @@
             <div class="q-pt-sm q-pb-md q-pr-sm">
                 <div class="tooltip-wrapper">
                     <q-btn size="38px" glossy round push :color="playerState.play?'grey':'green'"
-                        :disable="!playRecordAvailable"
+                        :disable="!playRecordAvailable || playerState.record"
                         @click="playScript">
                             <transition-group name="q-transition--rotate">
                                 <q-icon key="play_arrow" name="play_arrow" v-if="!playerState.play"></q-icon>
@@ -62,12 +62,14 @@
 <script lang="ts">
 import { Vue, Component } from "vue-property-decorator";
 import { State, Mutation } from "vuex-class";
-import { QSpinnerHourglass } from 'quasar';
+import { QSpinnerHourglass, QVueGlobals } from 'quasar';
 import SettingsTab from './tabs/SettingsTab.vue';
 import ControlTab from './tabs/ControlTab.vue';
 import AboutTab from './tabs/AboutTab.vue';
 import AppService from '../services/AppService';
 import _ from 'lodash';
+import { PlayerState } from '../models/PlayerState';
+import ScriptService from '../services/ScriptService';
 
 @Component({
     components:{
@@ -79,9 +81,10 @@ import _ from 'lodash';
 export default class ControlPanel extends Vue {
   isAsking = false;
   tab: string | undefined = "control";
-  @State("player") playerState: any;
+  @State("player") playerState!: PlayerState;
   @Mutation("setPlayerState") setPlayerState: any;
   @State("lang") ui: any;
+  $q!: QVueGlobals;
 
     mounted() {
         (window as any).closeApp=this.close;   
@@ -110,6 +113,8 @@ export default class ControlPanel extends Vue {
                   message: this.ui ? this.ui.message_closing : 'Stopping all pending operators. Please wait...',
                   sanitize: true
               });
+              if (this.playerState.record)
+                this.record();
               this.playerState.play=false;
               this.playerState.record=false;
               this.setPlayerState(this.playerState);
@@ -148,13 +153,21 @@ export default class ControlPanel extends Vue {
       this.playerState.play=!this.playerState.play;
   }
   record(){
-      this.$q.notify({
-          color: 'red',
-          message:'This feature is unavailable right now.',
-          actions:[
-              { label: 'OK', color:'white'}
-          ]
-      })
+    if (this.playerState.record){
+        this.$q.loading.show();
+        ScriptService.stoprecord().finally(()=>{
+            this.playerState.record=false;
+            this.setPlayerState(this.playerState);
+            setTimeout(()=>{
+                this.$q.loading.hide();
+            },200);
+        });
+    }
+    else{
+        this.playerState.record=true;
+        this.setPlayerState(this.playerState);
+        ScriptService.record(this.playerState.pid);
+    }
   }
 
   get playRecordAvailable(){

@@ -39,6 +39,9 @@ import {
   QCard,
   QCardSection,
   QCardActions,
+  QSpinnerPuff,
+  QSpace,
+  QBar,
   Notify,
   Loading,
   ClosePopup
@@ -77,6 +80,9 @@ Vue.use(Quasar, {
     QCard,
     QCardSection,
     QCardActions,
+    QSpinnerPuff,
+    QBar,
+    QSpace,
     QImg
   },
   directives: {

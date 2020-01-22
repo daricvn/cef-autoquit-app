@@ -40,6 +40,7 @@
             this.yLine.Size = new System.Drawing.Size(2, 100);
             this.yLine.TabIndex = 3;
             this.yLine.TabStop = false;
+            this.yLine.Click += new System.EventHandler(this.yLine_Click);
             // 
             // xLine
             // 
@@ -49,6 +50,7 @@
             this.xLine.Size = new System.Drawing.Size(100, 2);
             this.xLine.TabIndex = 2;
             this.xLine.TabStop = false;
+            this.xLine.Click += new System.EventHandler(this.xLine_Click);
             // 
             // timeTicker
             // 
@@ -84,6 +86,7 @@
             this.Text = "MouseCoord";
             this.TopMost = true;
             this.Load += new System.EventHandler(this.MouseCoord_Load);
+            this.Click += new System.EventHandler(this.MouseCoord_Click);
             ((System.ComponentModel.ISupportInitialize)(this.yLine)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.xLine)).EndInit();
             this.ResumeLayout(false);

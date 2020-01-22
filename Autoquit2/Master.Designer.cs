@@ -28,15 +28,22 @@
         /// </summary>
         private void InitializeComponent()
         {
+            this.components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Master));
+            this.moveTimer = new System.Windows.Forms.Timer(this.components);
             this.SuspendLayout();
+            // 
+            // moveTimer
+            // 
+            this.moveTimer.Interval = 10;
+            this.moveTimer.Tick += new System.EventHandler(this.moveTimer_Tick);
             // 
             // Master
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(977, 586);
-            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
+            this.ClientSize = new System.Drawing.Size(977, 630);
+            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MaximizeBox = false;
             this.Name = "Master";
@@ -48,6 +55,8 @@
         }
 
         #endregion
+
+        private System.Windows.Forms.Timer moveTimer;
     }
 }
 

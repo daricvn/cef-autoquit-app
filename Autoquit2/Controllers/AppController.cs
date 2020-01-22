@@ -26,13 +26,12 @@ namespace Autoquit2.Controllers {
         }
         [Get]
         public IResponse GetConfig() {
-            Recorder.Initialize();
             Program.Settings = Settings.GetConfig();
             return Response.WithSuccess(Program.Settings);
         }
 
         [Post]
-        public IResponse SaveConfig(AppSettings model, string test) {
+        public IResponse SaveConfig(AppSettings model) {
             if (model != null ) {
                 var path = Path.Combine(Constant.AppPath, Constant.APP_SETTINGS_PATH);
                 File.WriteAllText(path, JsonConvert.SerializeObject(model));
@@ -82,6 +81,21 @@ namespace Autoquit2.Controllers {
             //catch ( Exception ) { }
             Application.Exit();
         }
-
+        [Post("event")]
+        public IResponse GetEvent(string name ) {
+            switch ( name ) {
+                case "bar-mouse-down":
+                    Master.Form.Invoke((MethodInvoker)(() => {
+                        ((Master)Master.Form).StartMove();
+                    }));
+                    break;
+                case "bar-mouse-up":
+                    Master.Form.Invoke((MethodInvoker)(() => {
+                        ((Master)Master.Form).StopMove();
+                    }));
+                    break;
+            }
+            return Response.Success;
+        }
     }
 }

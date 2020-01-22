@@ -44,11 +44,7 @@ export default new Vuex.Store({
       state.script=value;
     },
     setPlayerState(state, playerState){
-      state.player.play= playerState.play;
-      state.player.record= playerState.record;
-      state.player.speed=playerState.speed;
-      state.player.count=playerState.count;
-      state.player.targetPid=playerState.targetPid;
+      state.player = playerState;
     },
     setPath(state, filePath){
       state.filePath=filePath;

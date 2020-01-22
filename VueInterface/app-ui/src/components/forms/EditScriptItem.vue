@@ -59,6 +59,8 @@ import { Vue, Component, Prop, Emit } from 'vue-property-decorator';
 import FlexibleInput from './FlexibleInput.vue';
 import ScriptEditor from './ScriptEditor.vue';
 import Coord from '../../models/Coord';
+import ScriptService from '../../services/ScriptService';
+import { PlayerState } from '../../models/PlayerState';
 
 @Component({
     components:{
@@ -75,7 +77,7 @@ export default class EditScriptItem extends ScriptEditor{
     order: number = 1;
     eventType: ScriptType = ScriptType.DO_NOTHING;
     keyName: string= '';
-    timeOffset: Number =0;
+    timeOffset: number =0;
     active: boolean = false;
     sendInput: boolean = false;
     coord: Coord = { x:0, y: 0};

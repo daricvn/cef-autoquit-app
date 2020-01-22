@@ -1,7 +1,7 @@
 <template>
     <div class="column full-height"
         style="width: 100%;">
-        <div class="col-auto" style="min-height: 73vh; border: 0.1px solid lightgrey; overflow: hidden;">
+        <div class="col-auto" style="min-height: 67vh; border: 0.1px solid lightgrey; overflow: hidden;">
              <q-list separator bordered dense>
                 <q-item>
                     <q-item-section>
@@ -25,9 +25,11 @@
                 </q-item>
             </q-list>
             <q-virtual-scroll
-                style="max-height: 70vh;"
+                style="max-height: 62vh;"
                 :items="list"
                 separator
+                ref="scriptTableRef"
+                :virtual-scroll-slice-size="40"
             >
                 <template v-slot="{ item, index }">
                     <q-item
@@ -38,8 +40,11 @@
                         @dragenter="onDragEnter($event, item)"
                         @dragstart="onDragStart($event, item)"
                         @dragend="onDrop($event)"
-                        :class="{ 'bg-blue-1': item.clear , 'bg-grey-5': !item.clear && !item.active, 'bg-orange': !!item.sendInput }"
-                    >   
+                        :class="{ 'bg-blue-1': item.clear , 'bg-grey-5': !item.clear && !item.active, 'bg-orange': !!item.sendInput,
+                            'row-play': isPlaying && playerState.index == index }"
+                        v-if="!playerState.record"
+                        style="position: relative"
+                    >
                         <q-item-section >
                             <q-item-label style="max-height: 41px;">
                                 <div class="row" style="max-width: 90vw;" v-show="!item.clear" :class="{ 'text-italic': !item.clear && isDirty(item) }">
@@ -75,6 +80,18 @@
                                             {{ lang.edit }}
                                         </q-btn>
                                     </div>
+                                </div>
+                            </q-item-label>
+                        </q-item-section>
+                    </q-item>
+                    <q-item v-else>
+                        <q-item-section>
+                            <q-item-label style="height: 41px;" class="justify-center">
+                                <div class="row" style="max-width: 90vw;">
+                                    <div class="col-1"></div>
+                                    <div class="col-3" v-text="lang[item.eventType]"></div>
+                                    <div class="col-2" v-text="mouseValue(item)"></div>
+                                    <div class="col-2" v-text="item.timeOffset"></div>
                                 </div>
                             </q-item-label>
                         </q-item-section>
@@ -117,6 +134,9 @@ import { State, Mutation } from 'vuex-class';
 import EditScriptItem from './forms/EditScriptItem.vue';
 import ScriptEditor from './forms/ScriptEditor.vue';
 import FlexibleInput from './forms/FlexibleInput.vue';
+import { QVirtualScroll } from 'quasar';
+import { PlayerState } from '../models/PlayerState';
+import ScriptService from '../services/ScriptService';
 
 @Component({
     components:{
@@ -129,8 +149,10 @@ export default class ScriptTable extends ScriptEditor{
     @State("lang") lang: any;
     @State("script") script: Array<any> | undefined;
     @Mutation("setScript") setScript: any;
-    @State("player") playerState: any;
+    @Mutation("setPlayerState") setPlayerState: any;
+    @State("player") playerState!: PlayerState;
     @Ref("editModal") editModal!: EditScriptItem;
+    @Ref("scriptTableRef") scriptTable!: QVirtualScroll;
     // table: TableData<ScriptItem> | null = null;
     list: ScriptItem[]=[];
     selectedItems: any[]=[];
@@ -143,30 +165,92 @@ export default class ScriptTable extends ScriptEditor{
     dragItem?: ScriptItem ;
     lastDragIndex: number =-1;
     selectedItem!: ScriptItem;
+    isPlaying = false;
     mounted() {
         (window as any)['addItem'] = (json: string)=>{
             let item = JSON.parse(json) as ScriptItem;
-            if (item)
+            if (item){
+                if (this.list.length > 0){
+                    let last = this.list[this.list.length-1];
+                    if (last.eventType == ScriptType.KEY_DOWN && item.eventType == ScriptType.KEY_UP && (item.timeOffset==null || item.timeOffset <= 200)
+                     && last.keyName == item.keyName){
+                        last.eventType = ScriptType.KEY_PRESS;
+                        this.list.splice(this.list.length-1,1, last);
+                        return;
+                    }
+                    if (last.eventType == ScriptType.MOUSE_DOWN && item.eventType == ScriptType.MOUSE_UP && (item.timeOffset == null || item.timeOffset<=200)
+                        && last.keyName == item.keyName){
+                            if (last.coord && item.coord){
+                                let x= last.coord.x || 0;
+                                let y= last.coord.y || 0;
+                                let tx= item.coord.x || 0;
+                                let ty= item.coord.y || 0;
+                                if (Math.abs(x-tx) <= 20 && Math.abs(y-ty) <= 20){
+                                    last.eventType = ScriptType.MOUSE_CLICK;
+                                    this.list.splice(this.list.length-1,1, last);
+                                    return;
+                                }
+                            }
+                        }
+                }
                 this.list.push(item);
+                this.scriptTable.scrollTo(this.list.length-1);
+            }
         }
         this.load(true);
     }
 
+    @Watch("playerState", { deep: true })
+    onPlayerStateChanged(){
+        if (this.playerState.play)
+        {
+            if (!this.isPlaying){
+                this.isPlaying=true;
+                this.playerState.index = 0;
+                this.playerState.count = 0;
+                this.playScript();
+            }
+        }
+        else{
+            if (this.isPlaying)
+            {
+                this.isPlaying=false;
+            }
+        }
+    }
+
+    playScript(){
+        if (this.isPlaying){
+            if (!this.playerState.count )
+                this.playerState.count = 0;
+            if (this.playerState.index==0){
+                this.playerState.count +=1;
+                this.setPlayerState(this.playerState);
+            }
+            if (this.playerState.index != null){
+                const script = this.list[this.playerState.index];
+                setTimeout(()=>{
+                    this.scriptTable.scrollTo(this.playerState.index || 0);
+                    let pidList = [];
+                    if (this.playerState.targetPid && this.playerState.targetPid.length > 0){
+                        this.playerState.targetPid.forEach(item => pidList.push(item.pid));
+                    }
+                    else pidList.push(0);
+                    ScriptService.play(pidList, script).finally(()=>{
+                        if (this.playerState.index != null){
+                            this.playerState.index +=1;
+                            if (this.playerState.index >= this.list.length)
+                                   this.playerState.index = 0;
+                            this.playScript();
+                        }
+                    });
+                }, script.timeOffset || 0);
+            }
+        }
+    }
+
     load(reload: boolean = false){
         this.setListData(this.script as ScriptItem[]);
-    }
-
-    onTypeChanged(data: ScriptItem){
-
-    }
-
-    onInputClick(data: ScriptItem){
-
-    }
-    onEditClick(data: ScriptItem){
-    }
-
-    onDeleteClick(data: ScriptItem){
     }
 
     deleteAll(){
@@ -393,6 +477,11 @@ export default class ScriptTable extends ScriptEditor{
     log(item: any){
         console.log(item);
     }
+    mouseValue(item: ScriptItem){
+        if (item.eventType && this.getScriptType(item.eventType)=='mouse' && item.coord)
+            return `${item.keyName || ''}[${item.coord.x || 0}:${item.coord.y || 0}]`
+        else return item.keyName;
+    }
 }
 </script>
 <style>
@@ -418,6 +507,22 @@ td.small-cell{
     }
     100%{
         background: rgba(118,168,255,0);
+    }
+}
+
+.row-play{
+    animation: aplaying 2.5s infinite linear;
+    background: linear-gradient(to left, rgba(68,148,255,0.6),rgba(158,218,255,0.6),rgba(68,148,255,0.6)) !important;
+    background-repeat: repeat-x;
+    background-size: 100% 100%;
+}
+
+@keyframes aplaying {
+    from {
+        background-position-x: 0;
+    }
+    to {
+        background-position-x: 712px;
     }
 }
 </style>

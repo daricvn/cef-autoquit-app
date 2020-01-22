@@ -1,6 +1,18 @@
 <template>
   <q-layout>
-    <div class="row" v-show="!brokenApp" style="height: 100vh; width: 100vw; overflow-x: hidden;" v-if="lang && lang['file-namespace']">
+        <q-bar class="bg-blue white-text" style="z-index: 500000" 
+          @mousedown="sendEvent('bar-mouse-down')"
+          @mouseup="sendEvent('bar-mouse-up')">
+              <q-icon name="img:icon.ico" />
+              <div class="non-selectable">Autoquit</div>
+
+              <q-space />
+
+              <q-btn dense flat icon="minimize" @mousedown.stop @mouseup.stop @click="minimize" />
+              <!-- <q-btn dense flat icon="crop_square" /> -->
+              <q-btn dense flat icon="close" @mousedown.stop @mouseup.stop @click="close" />
+        </q-bar>
+    <div class="row" v-show="!brokenApp" style="height: 93vh; width: 100vw; overflow-x: hidden;" v-if="lang && lang['file-namespace']">
       <div class="col-7">
         <script-panel></script-panel>
       </div>
@@ -28,9 +40,10 @@ import ScriptPanel from './components/ScriptPanel.vue';
 import { State, Mutation } from 'vuex-class';
 import AppService from './services/AppService';
 import { AppSettings } from './models/AppSettings';
-import {Dialog} from 'quasar';
+import {Dialog, QSpinnerHourglass} from 'quasar';
 import ControlPanel from './components/ControlPanel.vue';
 import { config } from './environment/config';
+import { PlayerState } from './models/PlayerState';
 
 @Component({
   components:{
@@ -40,12 +53,14 @@ import { config } from './environment/config';
 })
 export default class App extends Vue {
   @State("lang") lang: any;
+  @State("player") playerState!: PlayerState;
   @State(state=>state.darkTheme) darkTheme: any;
   @State(state=>state.loadState) isLoading: any;
   @Mutation('setDarkTheme') setDarkTheme: any;
   @Mutation('setSettings') setSettings: any;
   @Mutation('setLoadState') setLoadState: any;
   @Mutation('setLang') setLanguage: any;
+  @Mutation("setPlayerState") setPlayerState: any;
   brokenApp: Boolean = false;
   mounted(){
     this.setLoadState(true);
@@ -107,6 +122,49 @@ export default class App extends Vue {
         },1000);
       });
   }
+
+  
+  close(){
+      if (this.$q.loading.isActive) return;
+      this.$q.dialog({
+          cancel:{
+              label:'No',
+              flat: true
+          },
+          ok:{
+              label:'Yes',
+              icon:'done'
+          },
+          title: this.lang ? this.lang.confirm_exit:'Are you sure want to exit?'
+      })
+      .onOk(()=>{
+          let pending=0;
+          if (this.playerState.record || this.playerState.play){
+              this.$q.loading.show({
+                  spinner: QSpinnerHourglass as any,
+                  message: this.lang ? this.lang.message_closing : 'Stopping all pending operators. Please wait...',
+                  sanitize: true
+              });
+              this.playerState.play=false;
+              this.playerState.record=false;
+              this.setPlayerState(this.playerState);
+              pending=2000;
+          }
+          setTimeout(()=> { 
+            AppService.closeApp().then(()=>{
+                this.$q.loading.hide();
+            });
+          },pending);
+      });
+  }
+
+  minimize(){
+
+  }
+
+  sendEvent(name: string){
+    AppService.sendEvent(name);
+  }
 }
 </script>
 
@@ -162,5 +220,8 @@ export default class App extends Vue {
     }
     .q-checkbox.round .q-checkbox__inner--active .q-checkbox__bg.absolute{
       border: 1px solid rgba(0,0,0,.54);
+    }
+    .q-tooltip{
+      overflow: hidden !important;
     }
 </style>

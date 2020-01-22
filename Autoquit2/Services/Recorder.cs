@@ -1,4 +1,5 @@
 ﻿using Autoquit2.Models;
+using Autoquit2.Views;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -25,6 +26,7 @@ namespace Autoquit2.Services {
         }
         internal static void Stop() {
             isRecording = false;
+            targetAction = null;
         }
 
         internal static bool IsRecording {
@@ -54,6 +56,11 @@ namespace Autoquit2.Services {
         private static void MouseHook_MouseAction( MouseHookEventArgs arg ) {
             if ( isRecording && targetAction != null ) {
                 targetAction.Invoke(arg);
+            }
+            if (arg.Key == MouseKey.LEFT_CLICK && MouseCoord.Instance!=null) {
+                if ( ((MouseCoord)MouseCoord.Instance).IsRetrieving ) {
+                    ((MouseCoord)MouseCoord.Instance).Close();
+                }
             }
         }
 

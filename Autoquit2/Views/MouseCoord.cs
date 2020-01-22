@@ -1,4 +1,5 @@
-﻿using System;
+﻿using CefCore;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -13,9 +14,12 @@ using WinAPI.Hook;
 
 namespace Autoquit2.Views {
     public partial class MouseCoord : Form {
+        public static Form Instance => _this;
+        private static Form _this;
         private MouseHook.POINT currentPoint;
         private IntPtr targetWindows = IntPtr.Zero;
         private bool Retrieving = false;
+        private bool clickable = true;
 
         public int LastX {
             get {
@@ -27,15 +31,20 @@ namespace Autoquit2.Views {
                 return currentPoint.y;
             }
         }
-        public MouseCoord() {
+        public bool IsRetrieving => Retrieving;
+
+        public MouseCoord(bool clickable = true) {
             InitializeComponent();
             this.BackColor = Color.DarkMagenta;
             this.TransparencyKey = Color.DarkMagenta;
+            _this = this;
+            this.clickable = clickable;
         }
 
         private void MouseCoord_Load( object sender, EventArgs e ) {
             int initialStyle = WinProcess.GetWindowLong(this.Handle, -20);
-            WinProcess.SetWindowLong(this.Handle, -20, (uint)(initialStyle | 0x80000 | 0x20 | 0x00000080));
+            if (!clickable)
+                WinProcess.SetWindowLong(this.Handle, -20, (uint)(initialStyle | 0x80000 | 0x20 | 0x00000080));
             this.Size = new Size(Screen.PrimaryScreen.Bounds.Width, Screen.PrimaryScreen.Bounds.Height);
             this.Location = new Point(0, 0);
             xLine.Size = new Size(Screen.PrimaryScreen.Bounds.Width, 1);
@@ -53,14 +62,16 @@ namespace Autoquit2.Views {
 
         public void Show( IntPtr target ) {
             currentPoint = MouseHook.GetCursorPosition();
-            base.ShowDialog();
-            timeTicker.Enabled = true;
             targetWindows = target;
+            timeTicker.Enabled = true;
             this.Retrieving = true;
+            base.ShowDialog();
         }
         public new void Close() {
             timeTicker.Enabled = false;
             this.Retrieving = false;
+            _this = null;
+            Chromium.RunScript($"window.setCoord({LastX},{LastY})");
             base.Close();
         }
 
@@ -77,6 +88,18 @@ namespace Autoquit2.Views {
                 this.Close();
             }
             lbMousecoord.Text = string.Format("{0}:{1}", currentPoint.x, currentPoint.y);
+        }
+
+        private void MouseCoord_Click( object sender, EventArgs e ) {
+            this.Close();
+        }
+
+        private void yLine_Click( object sender, EventArgs e ) {
+            this.Close();
+        }
+
+        private void xLine_Click( object sender, EventArgs e ) {
+            this.Close();
         }
     }
 }

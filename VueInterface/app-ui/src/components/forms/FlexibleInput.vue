@@ -27,7 +27,7 @@
                 <q-input label="Y" type="number" :min="0" :max="108000" dense square outlined :value="coord.y" @input="val=>setCoord(coord.x, val)"></q-input>
             </div>
             <div class="col-6 justify-center vertical-middle text-center">
-                <q-btn :label="lang.setcoord" color="primary"></q-btn>
+                <q-btn :label="lang.setcoord" color="primary" @click="getMouseCoord" :disable="!playerState.pid"></q-btn>
             </div>
         </div>
   </div>
@@ -40,6 +40,9 @@ import { ScriptType } from '../../models/ScriptItem';
 import { Prop, Emit, PropSync, Watch } from 'vue-property-decorator';
 import { State } from 'vuex-class';
 import Coord from '../../models/Coord';
+import ScriptService from '../../services/ScriptService';
+import { PlayerState } from '../../models/PlayerState';
+import { QVueGlobals, QSpinnerPuff } from 'quasar';
 
 @Component
 export default class FlexibleInput extends Vue{
@@ -51,6 +54,13 @@ export default class FlexibleInput extends Vue{
     }) coord!: Coord;
     @Prop({ default: false }) simply?: boolean;
     @Prop() label?: string;
+    @State("player") playerState!: PlayerState;
+    mounted(){
+        (window as any).setCoord = this.setCoord;
+    }
+    $q!: QVueGlobals;
+    recordingCoord: boolean = false;
+
     get scriptType(){
         if (this.type == ScriptType.ENTER_TEXT || this.type == ScriptType.RANDOM_TEXT)
             return this.simply?'text':'textarea';
@@ -107,7 +117,23 @@ export default class FlexibleInput extends Vue{
             this.coord.x=x;
             this.coord.y=y;
             this.updateCoord();
+            if (this.recordingCoord)
+                this.$q.loading.hide();
         }
+    }
+
+    getMouseCoord(){
+        this.recordingCoord = true;
+        this.$q.loading.show({
+            spinner: QSpinnerPuff as any,
+            spinnerSize: 130
+        });
+        ScriptService.getcoord(this.playerState.pid || 0).then(response =>{
+            const data = response.data;
+            if (data && !isNaN(data.x) && !isNaN(data.y)){
+                this.setCoord(data.x, data.y);
+            }
+        });
     }
 }
 </script>

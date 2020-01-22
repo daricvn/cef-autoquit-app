@@ -1,10 +1,12 @@
 ﻿using Autoquit2._App_Data;
 using Autoquit2.Models;
 using Autoquit2.Services;
+using Autoquit2.Views;
 using CefCore;
 using HttpService;
 using HttpService.Core;
 using HttpService.Interfaces;
+using HttpService.Utility;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -181,16 +183,15 @@ namespace Autoquit2.Controllers {
         }
         [Post("record")]
         public IResponse StartRecord(int pid) {
-
             var process = pid == 0 ? null : Process.GetProcessById(pid);
             if ( process == null && pid != 0)
                 return Response.NotFound;
-            int lastOperation = DateTime.Now.Millisecond;
+            var lastOperation = DateTime.Now;
             Recorder.Start(result => {
                 var item = new ScriptItem();
                 item.Active = true;
-                item.TimeOffset = DateTime.Now.Millisecond - lastOperation;
-                lastOperation = DateTime.Now.Millisecond;
+                item.TimeOffset = (long) Math.Round(DateTime.Now.ToUnixTimestamp() - lastOperation.ToUnixTimestamp());
+                lastOperation = DateTime.Now;
                 if (result is MouseHookEventArgs) {
                     var mouseArgs = (MouseHookEventArgs)result;
                     var name = Enum.GetName(typeof(MouseKey), mouseArgs.Key);
@@ -221,7 +222,7 @@ namespace Autoquit2.Controllers {
                     item.KeyName = Enum.GetName(typeof(KeyCode), keyCode);
                 }
                 if ( !string.IsNullOrEmpty(item.EventType) ) {
-                    Chromium.RunScript($"window.addItem('{JsonConvert.SerializeObject(item)}')");
+                    Chromium.RunScript($"window.addItem('{item.ToJson()}')");
                 }
             });
             return Response.Success;
@@ -232,55 +233,78 @@ namespace Autoquit2.Controllers {
             return Response.Success;
         }
 
+        [Post("getcoord")]
+        public IResponse GetMouseCoord(int pid) {
+            if ( MouseCoord.Instance == null ) {
+                var form = new MouseCoord();
+
+                var process = pid == 0 ? null : Process.GetProcessById(pid);
+                form.Show(process?.MainWindowHandle ?? IntPtr.Zero);
+                return Response.WithSuccess(new {
+                    x = form.LastX,
+                    y = form.LastY
+                });
+            }
+            else {
+                var form = (MouseCoord)MouseCoord.Instance;
+                return Response.WithSuccess(new {
+                    x = form.LastX,
+                    y = form.LastY
+                });
+            }
+        }
+
         [Post("play")]
-        public IResponse Run(IntPtr pid, ScriptItem item ) {
+        public IResponse Run(IntPtr[] pids, ScriptItem item ) {
             try {
-                if ( IsMouseEvent(item.EventType) ) {
-                    var mouseKey = MouseKey.NONE;
-                    var strName = "";
-                    if ( item.KeyName.StartsWith("R") )
-                        strName = "RIGHT";
-                    if ( item.KeyName.StartsWith("M") )
-                        strName = "MIDDLE";
-                    if ( item.KeyName.StartsWith("L") )
-                        strName = "LEFT";
-                    var index = item.EventType.IndexOf("_") + 1;
-                    Enum.TryParse($"{strName}_{item.EventType.Substring(index)}", out mouseKey);
-                    if ( mouseKey != MouseKey.NONE && item.Coord != null ) {
-                        if ( item.SendInput )
-                            Recorder.SendMouse(pid, mouseKey, item.Coord.X, item.Coord.Y);
-                        else
-                            WinAPI.Core.SendMouseEx(pid, mouseKey, item.Coord.X, item.Coord.Y);
-                    }
-                }
-                else if ( item.EventType.StartsWith("KEY") ) {
-                    if ( Enum.TryParse(item.KeyName, out KeyCode keyCode) && Enum.TryParse(item.EventType, out KeyType keyType) ) {
-                        var key = ChromiumKeyConverter.GetKey(item.KeyName);
-                        SendKey(pid, keyType, key, item.SendInput);
-                    }
-                }
-                else if ( item.EventType == Constant.ENV_ENTER_TEXT || item.EventType == Constant.ENV_ENTER_SECRET
-                    || item.EventType == Constant.ENV_RANDOM_TEXT ) {
-                    var keyName = item.KeyName;
-                    if ( item.EventType == Constant.ENV_RANDOM_TEXT && keyName.Contains(";") ) {
-                        var keys = keyName.Split(';');
-                        if ( keys.Length == 1 )
-                            keyName = keys[0];
-                        else {
-                            keyName = keys[rnd.Next(0, keys.Length - 1)];
+                foreach ( var pid in pids ) {
+                    if ( IsMouseEvent(item.EventType) ) {
+                        var mouseKey = MouseKey.NONE;
+                        var strName = "";
+                        if ( item.KeyName.StartsWith("R") )
+                            strName = "RIGHT";
+                        if ( item.KeyName.StartsWith("M") )
+                            strName = "MIDDLE";
+                        if ( item.KeyName.StartsWith("L") )
+                            strName = "LEFT";
+                        var index = item.EventType.IndexOf("_") + 1;
+                        Enum.TryParse($"{strName}_{item.EventType.Substring(index)}", out mouseKey);
+                        if ( mouseKey != MouseKey.NONE && item.Coord != null ) {
+                            if ( item.SendInput )
+                                Recorder.SendMouse(pid, mouseKey, item.Coord.X, item.Coord.Y);
+                            else
+                                WinAPI.Core.SendMouseEx(pid, mouseKey, item.Coord.X, item.Coord.Y);
                         }
                     }
-                    Task.Run(async () => {
-                        foreach ( char c in keyName ) {
-                            WinAPI.Keys key;
-                            if ( (key = KeyMapper.Get(c, out bool shift)) != WinAPI.Keys.None ) {
-                                SendKey(pid, KeyType.KEY_PRESS, key.ToWindowsKey(), item.SendInput);
-                                if ( Program.Settings.TypeSpeed > 0 && keyName.Length >= 50 ) {
-                                    await Task.Delay(Program.Settings.TypeSpeed / 2);
-                                }
+                    else if ( item.EventType.StartsWith("KEY") ) {
+                        if ( Enum.TryParse(item.KeyName, out KeyCode keyCode) && Enum.TryParse(item.EventType, out KeyType keyType) ) {
+                            var key = ChromiumKeyConverter.GetKey(item.KeyName);
+                            SendKey(pid, keyType, key, item.SendInput);
+                        }
+                    }
+                    else if ( item.EventType == Constant.ENV_ENTER_TEXT || item.EventType == Constant.ENV_ENTER_SECRET
+                        || item.EventType == Constant.ENV_RANDOM_TEXT ) {
+                        var keyName = item.KeyName;
+                        if ( item.EventType == Constant.ENV_RANDOM_TEXT && keyName.Contains(";") ) {
+                            var keys = keyName.Split(';');
+                            if ( keys.Length == 1 )
+                                keyName = keys[0];
+                            else {
+                                keyName = keys[rnd.Next(0, keys.Length - 1)];
                             }
                         }
-                    }).Wait();
+                        Task.Run(async () => {
+                            foreach ( char c in keyName ) {
+                                WinAPI.Keys key;
+                                if ( (key = KeyMapper.Get(c, out bool shift)) != WinAPI.Keys.None ) {
+                                    SendKey(pid, KeyType.KEY_PRESS, key.ToWindowsKey(), item.SendInput);
+                                    if ( Program.Settings.TypeSpeed > 0 && keyName.Length >= 50 ) {
+                                        await Task.Delay(Program.Settings.TypeSpeed / 2);
+                                    }
+                                }
+                            }
+                        }).Wait();
+                    }
                 }
                 return Response.Success;
             }
