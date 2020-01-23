@@ -1,33 +1,38 @@
 <template>
   <div>
         <q-input v-if="scriptType=='textarea'" :maxlength="600" autogrow :value="value" :label="label"
+            :disable="disable"
             square outlined type="textarea" @input="sendInput"></q-input>
         <q-input v-else-if="scriptType=='text'" :dense="simply" :maxlength="600" :value="value" :label="label"
+            :disable="disable"
             square outlined type="text" @input="sendInput"></q-input>
         <q-input v-else-if="scriptType=='password'" :dense="simply" :value="value" :label="label"
+            :disable="disable"
             square outlined type="password" @input="sendInput"></q-input>
         <q-input v-else-if="scriptType =='key'" :dense="simply"  :label="label"
+            :disable="disable"
             square outlined :value="value" @keydown.prevent="onKeydown($event)"></q-input>
         <q-input v-else-if="scriptType == 'mouse'" :dense="simply"  :label="label"
+            :disable="disable"
             square outlined :value="mouseValue" @keydown.prevent @mousedown="onMousedown($event)"></q-input>
         <div class="row" v-else-if="scriptType =='file'">
             <div class="col-8">
-                <q-input :value="value" @keydown.prevent @click="browse" :label="label"></q-input>
+                <q-input :value="value" @keydown.prevent @click="browse" :label="label" :disable="disable"></q-input>
             </div>
             <div class="col-4">
-                <q-btn color="primary" :label="lang.browsefile" @click="browse"></q-btn>
+                <q-btn color="primary" :label="lang.browsefile" @click="browse" :disable="disable"></q-btn>
             </div>
         </div>
         <q-input v-else-if="scriptType =='file-field'" :dense="simply"  :label="label" :value="value" @keydown.prevent @click="browse"></q-input>
         <div class="row" v-if="scriptType == 'mouse' && ! simply">
             <div class="col-3">
-                <q-input label="X" type="number" :min="0" :max="108000" dense square outlined :value="coord.x" @input="val=>setCoord(val, coord.y)"></q-input>
+                <q-input :disable="disable" label="X" type="number" :min="0" :max="108000" dense square outlined :value="coord.x" @input="val=>setCoord(val, coord.y)"></q-input>
             </div>
             <div class="col-3">
-                <q-input label="Y" type="number" :min="0" :max="108000" dense square outlined :value="coord.y" @input="val=>setCoord(coord.x, val)"></q-input>
+                <q-input :disable="disable" label="Y" type="number" :min="0" :max="108000" dense square outlined :value="coord.y" @input="val=>setCoord(coord.x, val)"></q-input>
             </div>
-            <div class="col-6 justify-center vertical-middle text-center">
-                <q-btn :label="lang.setcoord" color="primary" @click="getMouseCoord" :disable="!playerState.pid"></q-btn>
+            <div class="col-6 justify-center vertical-middle text-center q-pa-sm">
+                <q-btn dense :label="lang.setcoord" color="primary" @click="getMouseCoord" :disable="!playerState.pid || disable"></q-btn>
             </div>
         </div>
   </div>
@@ -54,6 +59,7 @@ export default class FlexibleInput extends Vue{
     }) coord!: Coord;
     @Prop({ default: false }) simply?: boolean;
     @Prop() label?: string;
+    @Prop({ default: false }) disable!: boolean;
     @State("player") playerState!: PlayerState;
     mounted(){
         (window as any).setCoord = this.setCoord;

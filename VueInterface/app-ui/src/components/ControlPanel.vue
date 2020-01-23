@@ -45,7 +45,7 @@
             </div>
             <div class="q-pt-sm">
                 <q-btn glossy rounded :color="playerState.record?'white':'red'" :class=" {'text-red': playerState.record }" @click="record"
-                :disable="!playRecordAvailable">
+                :disable="!playRecordAvailable || playerState.play">
                     <q-icon size="28px" name="fiber_manual_record" class="on-left" :color="playerState.record?'red':'white'" :class="{'recording-indicator': playerState.record}"></q-icon>
                     <span :class="{'recording-indicator': playerState.record}">
                     {{ ui ? (playerState.record? ui.stoprecord : ui.record) : (playerState.record? 'Stop Record':'Record') }}

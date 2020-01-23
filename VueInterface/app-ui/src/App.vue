@@ -1,9 +1,9 @@
 <template>
   <q-layout>
-        <q-bar class="bg-blue white-text" style="z-index: 500000" 
+        <q-bar class="bg-blue white-text" style="z-index: 500000; position: fixed; width: 100%;" 
           @mousedown="sendEvent('bar-mouse-down')"
           @mouseup="sendEvent('bar-mouse-up')">
-              <q-icon name="img:icon.ico" />
+              <q-icon name="img:icon.ico" class="non-selectable" />
               <div class="non-selectable">Autoquit</div>
 
               <q-space />
@@ -12,7 +12,7 @@
               <!-- <q-btn dense flat icon="crop_square" /> -->
               <q-btn dense flat icon="close" @mousedown.stop @mouseup.stop @click="close" />
         </q-bar>
-    <div class="row" v-show="!brokenApp" style="height: 93vh; width: 100vw; overflow-x: hidden;" v-if="lang && lang['file-namespace']">
+    <div class="row app-border" v-show="!brokenApp" style="height: 100vh; width: 100vw; overflow-x: hidden; padding-top: 32px;" v-if="lang && lang['file-namespace']">
       <div class="col-7">
         <script-panel></script-panel>
       </div>
@@ -223,5 +223,12 @@ export default class App extends Vue {
     }
     .q-tooltip{
       overflow: hidden !important;
+    }
+
+    .app-border{
+      padding-left: 0.6px;
+      padding-right: 0.6px;
+      padding-bottom: 0.2px;
+      border: 0.2px solid var(--q-color-primary);
     }
 </style>

@@ -8,14 +8,14 @@
                         <q-item-label style="height: 41px;">
                             <div class="row">
                                 <div class="col-1">
-                                    <q-checkbox :value="isCheckedAll" @input="toggleCheckAll()"></q-checkbox>
+                                    <q-checkbox :value="isCheckedAll" @input="toggleCheckAll()" :disable="isPlaying"></q-checkbox>
                                 </div>
                                 <div class="col-7"></div>
                                 <div class="col-2" v-if="list.length>0">
-                                    <q-checkbox :value="isActiveAll" @input="toggleActiveAll()" color="green" class="round">
+                                    <q-checkbox :value="isActiveAll" @input="toggleActiveAll()" color="green" class="round" :disable="isPlaying">
                                         <q-tooltip>{{ lang.active }}</q-tooltip>
                                     </q-checkbox>
-                                    <q-checkbox :value="isManipulatedAll" @input="toggleManipulatedAll()" color="red" class="round" :disable="isDisableAll">
+                                    <q-checkbox :value="isManipulatedAll" @input="toggleManipulatedAll()" color="red" class="round" :disable="isDisableAll || isPlaying">
                                         <q-tooltip>{{ lang.manipulateMode }}</q-tooltip>
                                     </q-checkbox>
                                 </div>
@@ -41,7 +41,7 @@
                         @dragstart="onDragStart($event, item)"
                         @dragend="onDrop($event)"
                         :class="{ 'bg-blue-1': item.clear , 'bg-grey-5': !item.clear && !item.active, 'bg-orange': !!item.sendInput,
-                            'row-play': isPlaying && playerState.index == index }"
+                            'row-play': isPlaying && currentIndex == index }"
                         v-if="!playerState.record"
                         style="position: relative"
                     >
@@ -49,33 +49,34 @@
                             <q-item-label style="max-height: 41px;">
                                 <div class="row" style="max-width: 90vw;" v-show="!item.clear" :class="{ 'text-italic': !item.clear && isDirty(item) }">
                                     <div class="col-1">
-                                        <q-checkbox :val="item" v-model="selectedItems"></q-checkbox>
+                                        <q-checkbox :val="item" v-model="selectedItems" :disable="isPlaying"></q-checkbox>
                                     </div>
                                     <div class="col-3">
                                         <q-select square outlined dense v-model="item.eventType" :options="typeList" :label="lang.type" 
-                                        :readonly="!item.active"
+                                        :readonly="!item.active" :disable="isPlaying"
                                         map-options
                                         emit-value />
                                     </div>
                                     <div class="col-2">
                                         <!-- <q-input square outlined dense v-model="item.keyName" :label="lang.input" :readonly="!item.active || isEditableInput(item.keyName)"
                                             :disable="!item.active" /> -->
-                                        <flexible-input :simply="true" :label="lang.input" v-model="item.keyName" :type="item.eventType" :value="item.keyName" :coord="item.coord" />
+                                        <flexible-input :simply="true" :label="lang.input" v-model="item.keyName" :type="item.eventType" :value="item.keyName" :coord="item.coord" :disable="isPlaying" />
                                     </div>
                                     <div class="col-2">
                                         <q-input type="number" :step="10" :min="0" :max="1000000" square outlined dense v-model="item.timeOffset" :label="lang.timeoffset"
+                                         :disable="isPlaying"
                                         :readonly="!item.active" />
                                     </div>
                                     <div class="col-2">
-                                        <q-checkbox v-model="item.active" color="green" class="round">
+                                        <q-checkbox v-model="item.active" color="green" class="round" :disable="isPlaying">
                                             <q-tooltip>{{ lang.active }}</q-tooltip>
                                         </q-checkbox>
-                                        <q-checkbox v-model="item.sendInput" color="red" class="round" :disable="!item.active" v-show="item.active">
+                                        <q-checkbox v-model="item.sendInput" color="red" class="round" :disable="!item.active || isPlaying" v-show="item.active">
                                             <q-tooltip>{{ lang.manipulateMode }}</q-tooltip>
                                         </q-checkbox>
                                     </div>
                                     <div class="col-2">
-                                        <q-btn rounded dense class="q-pr-sm" color="primary" @click="edit(item)">
+                                        <q-btn rounded dense class="q-pr-sm" color="primary" @click="edit(item)" :disable="isPlaying">
                                             <q-icon class="on-left" name="edit"></q-icon>
                                             {{ lang.edit }}
                                         </q-btn>
@@ -134,7 +135,7 @@ import { State, Mutation } from 'vuex-class';
 import EditScriptItem from './forms/EditScriptItem.vue';
 import ScriptEditor from './forms/ScriptEditor.vue';
 import FlexibleInput from './forms/FlexibleInput.vue';
-import { QVirtualScroll } from 'quasar';
+import { QVirtualScroll, QVueGlobals } from 'quasar';
 import { PlayerState } from '../models/PlayerState';
 import ScriptService from '../services/ScriptService';
 
@@ -166,6 +167,7 @@ export default class ScriptTable extends ScriptEditor{
     lastDragIndex: number =-1;
     selectedItem!: ScriptItem;
     isPlaying = false;
+    $q!: QVueGlobals;
     mounted() {
         (window as any)['addItem'] = (json: string)=>{
             let item = JSON.parse(json) as ScriptItem;
@@ -204,6 +206,13 @@ export default class ScriptTable extends ScriptEditor{
     onPlayerStateChanged(){
         if (this.playerState.play)
         {
+            if (!this.list || this.list.length ==0){
+                this.playerState.play = false;
+                this.setPlayerState(this.playerState);
+                this.$q.dialog({
+                    message: this.lang.message_execute_failed || 'Cannot perform this action.'
+                })
+            }
             if (!this.isPlaying){
                 this.isPlaying=true;
                 this.playerState.index = 0;
@@ -230,23 +239,29 @@ export default class ScriptTable extends ScriptEditor{
             if (this.playerState.index != null){
                 const script = this.list[this.playerState.index];
                 setTimeout(()=>{
-                    this.scriptTable.scrollTo(this.playerState.index || 0);
-                    let pidList = [];
-                    if (this.playerState.targetPid && this.playerState.targetPid.length > 0){
-                        this.playerState.targetPid.forEach(item => pidList.push(item.pid));
-                    }
-                    else pidList.push(0);
-                    ScriptService.play(pidList, script).finally(()=>{
-                        if (this.playerState.index != null){
-                            this.playerState.index +=1;
-                            if (this.playerState.index >= this.list.length)
-                                   this.playerState.index = 0;
-                            this.playScript();
+                    if (this.isPlaying){
+                        this.scriptTable.scrollTo(this.playerState.index || 0);
+                        let pidList = [];
+                        if (this.playerState.targetPid && this.playerState.targetPid.length > 0){
+                            this.playerState.targetPid.forEach(item => pidList.push(item.pid));
                         }
-                    });
-                }, script.timeOffset || 0);
+                        else pidList.push(0);
+                        ScriptService.play(pidList, script).finally(()=>{
+                            if (this.playerState.index != null){
+                                this.playerState.index +=1;
+                                if (this.playerState.index >= this.list.length)
+                                    this.playerState.index = 0;
+                                this.playScript();
+                            }
+                        });
+                    }
+                }, (script.timeOffset || 0) / (this.playerState.speed || 1));
             }
         }
+    }
+
+    get currentIndex(){
+        return this.playerState.index;
     }
 
     load(reload: boolean = false){

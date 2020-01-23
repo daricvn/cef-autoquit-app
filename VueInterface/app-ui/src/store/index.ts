@@ -19,6 +19,7 @@ export default new Vuex.Store({
       record: false,
       speed: 1,
       count: -1,
+      index: 0,
       targetPid: []
     }
   },
