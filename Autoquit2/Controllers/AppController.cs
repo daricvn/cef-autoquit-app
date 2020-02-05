@@ -34,11 +34,27 @@ namespace Autoquit2.Controllers {
         public IResponse SaveConfig(AppSettings model) {
             if (model != null ) {
                 var path = Path.Combine(Constant.AppPath, Constant.APP_SETTINGS_PATH);
-                File.WriteAllText(path, JsonConvert.SerializeObject(model));
+                try {
+                    File.WriteAllText(path, JsonConvert.SerializeObject(model));
+                }
+                catch ( Exception ) { }
                 Program.Settings = model;
                 return Response.Success;
             }
             return Response.BadRequest;
+        }
+
+        [Post("bindhotkeys")]
+        public IResponse RegisterHotkey() {
+            if ( Program.Settings !=null ) {
+                Master.Form.Invoke((MethodInvoker)(() => {
+                    var master = Master.Form as Master;
+                    master.UnregisterHotkeys();
+                    master.RegisterHotkeys(Program.Settings);
+                }));
+                return Response.Success;
+            }
+            return Response.InternalError;
         }
 
         [Get("language")]

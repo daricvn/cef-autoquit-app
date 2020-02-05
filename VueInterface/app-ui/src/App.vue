@@ -76,7 +76,7 @@ export default class App extends Vue {
     // console.log(json);
     // console.log(settings);
     this.setSettings(settings);
-    this.setDarkTheme(!!settings.darkTheme, true);
+    this.setDarkTheme(!!settings.darkTheme);
     AppService.getLanguage(settings.language+"").then((response)=>{
           try{
             let language= response.data;

@@ -186,6 +186,9 @@ namespace Autoquit2.Controllers {
             var process = pid == 0 ? null : Process.GetProcessById(pid);
             if ( process == null && pid != 0)
                 return Response.NotFound;
+            else {
+                BringTop(pid);  
+            }
             var lastOperation = DateTime.Now;
             Recorder.Start(result => {
                 var item = new ScriptItem();

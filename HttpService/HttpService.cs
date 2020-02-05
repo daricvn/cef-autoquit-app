@@ -248,7 +248,10 @@ namespace HttpService
                             foreach ( var prop in props ) {
                                 var idx = keys.FindIndex(x => x.ToLower() == prop.Name.ToLower());
                                 if ( idx >= 0 && dict[keys[idx]] != null && prop.CanWrite ) {
-                                    prop.SetValue(obj, Convert.ChangeType(dict[keys[idx]], prop.PropertyType));
+                                    if ( prop.PropertyType.IsClass && !IsBasicType(prop.PropertyType))
+                                        prop.SetValue(obj, ToClass(dict[keys[idx]], prop.PropertyType));
+                                    else
+                                        prop.SetValue(obj, Convert.ChangeType(dict[keys[idx]], prop.PropertyType));
                                     dict.Remove(keys[idx]);
                                 }
                             }
@@ -264,6 +267,10 @@ namespace HttpService
                     }
                 }
             return list;
+        }
+
+        private static dynamic ToClass(object value, Type type) {
+            return JsonConvert.DeserializeObject(JsonConvert.SerializeObject(value), type);
         }
 
         private static int TryConvert<T>(Dictionary<string, object> dictionary , out T obj, out List<string> convertedKey) {

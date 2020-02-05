@@ -158,6 +158,7 @@ export default class ScriptPanel extends Vue {
     //   name: "Autoquit 1",
     //   fileName: "Autoquit.exe"
     // });
+    (window as any).bringTop = this.bringTop;
   }
 
     @Watch("subOptions")

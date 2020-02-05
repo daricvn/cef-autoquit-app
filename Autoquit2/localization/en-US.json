@@ -94,6 +94,7 @@
   "confirm_undo_title": "Undo Changes",
   "confirm_undo": "Are you sure want to undo all changes?",
   "confirm_override_old_script": "You are overriding an old version of this script. Once migrated, you will not able to open this script in older version (version 1) of this application, perhaps you may want to save a copy of it somewhere else. Are you sure want to continue?",
+  "confirm_override_hotkey": "Are you sure want to override {0} hotkey?",
 
   "message_closing": "Terminating all pending operations...",
   "message_saved": "Saved successfully.",

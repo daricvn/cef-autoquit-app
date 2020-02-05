@@ -9,6 +9,9 @@ export default class AppService{
     static saveSettings(settings: AppSettings): AxiosPromise<any> {
         return axios.post(`${config.URL}/config`, settings);
     }
+    static bindHotkeys(): AxiosPromise<any> {
+        return axios.post(`${config.URL}/config/bindhotkeys`);
+    }
     static getLanguage(fileName: string): AxiosPromise<any>{
         return axios.get(`${config.URL}/config/language?name=${fileName}`);
     }

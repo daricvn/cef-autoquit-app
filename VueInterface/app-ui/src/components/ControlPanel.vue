@@ -33,7 +33,7 @@
             <div class="q-pt-sm q-pb-md q-pr-sm">
                 <div class="tooltip-wrapper">
                     <q-btn size="38px" glossy round push :color="playerState.play?'grey':'green'"
-                        :disable="!playRecordAvailable || playerState.record"
+                        :disable="!playable"
                         @click="playScript">
                             <transition-group name="q-transition--rotate">
                                 <q-icon key="play_arrow" name="play_arrow" v-if="!playerState.play"></q-icon>
@@ -45,7 +45,7 @@
             </div>
             <div class="q-pt-sm">
                 <q-btn glossy rounded :color="playerState.record?'white':'red'" :class=" {'text-red': playerState.record }" @click="record"
-                :disable="!playRecordAvailable || playerState.play">
+                :disable="!recordable">
                     <q-icon size="28px" name="fiber_manual_record" class="on-left" :color="playerState.record?'red':'white'" :class="{'recording-indicator': playerState.record}"></q-icon>
                     <span :class="{'recording-indicator': playerState.record}">
                     {{ ui ? (playerState.record? ui.stoprecord : ui.record) : (playerState.record? 'Stop Record':'Record') }}
@@ -87,7 +87,9 @@ export default class ControlPanel extends Vue {
   $q!: QVueGlobals;
 
     mounted() {
-        (window as any).closeApp=this.close;   
+        (window as any).closeApp=this.close;
+        (window as any).play = this.playScript;
+        (window as any).record = this.record;
     }
 
   close(){
@@ -149,7 +151,16 @@ export default class ControlPanel extends Vue {
       },2000);
   }
 
+    get playable(){
+        return this.playRecordAvailable && !this.playerState.record;
+    }
+
+    get recordable(){
+        return this.playRecordAvailable  && !this.playerState.play;
+    }
+
   playScript(){
+      if (this.playerState.play == false && !this.playable) return;
       this.playerState.play=!this.playerState.play;
   }
   record(){
@@ -164,9 +175,11 @@ export default class ControlPanel extends Vue {
         });
     }
     else{
-        this.playerState.record=true;
-        this.setPlayerState(this.playerState);
-        ScriptService.record(this.playerState.pid);
+        if (this.recordable){
+            this.playerState.record=true;
+            this.setPlayerState(this.playerState);
+            ScriptService.record(this.playerState.pid);
+        }
     }
   }
 

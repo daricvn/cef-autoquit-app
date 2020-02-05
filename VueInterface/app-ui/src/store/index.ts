@@ -26,11 +26,29 @@ export default new Vuex.Store({
   mutations: {
     setSettings(state, settings){
       state.settings = settings;
+      if (settings){
+        AppService.saveSettings(state.settings)
+      }
     },
-    setDarkTheme(state, value, dontSave=false){
+    bindSettings(state, settings){
+      state.settings = settings;
+      if (settings){
+          AppService.saveSettings(state.settings).finally(()=>{
+            AppService.bindHotkeys()
+        });
+      }
+    },
+    setDarkTheme(state, value){
       state.darkTheme=value;
       Dark.set(value);
-      if (!dontSave && state.settings){
+      if (state.settings){
+        state.settings.darkTheme = value;
+      }
+    },
+    bindDarkTheme(state, value){
+      state.darkTheme=value;
+      Dark.set(value);
+      if (state.settings){
         state.settings.darkTheme = value;
         AppService.saveSettings(state.settings)
       }
