@@ -89,12 +89,12 @@ namespace Autoquit2.Controllers {
                 Recorder.Dispose();
             }
             catch (Exception) { }
-            //try {
-            //    Master.Form.Invoke((MethodInvoker)(() => {
-            //        Chromium.Shutdown();
-            //    }));
-            //}
-            //catch ( Exception ) { }
+            try {
+                Master.Form.Invoke((MethodInvoker)(() => {
+                    Master.Form.Close();
+                }));
+            }
+            catch ( Exception ) { }
             Application.Exit();
         }
         [Post("event")]

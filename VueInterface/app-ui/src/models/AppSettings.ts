@@ -39,4 +39,10 @@ export class KeyCombination{
         src.shiftKey == that.shiftKey &&
         src.key == that.key;
     }
+    static cloneTo(src: KeyCombination, target: KeyCombination){
+        target.key = src.key;
+        target.altKey = src.altKey;
+        target.ctrlKey = src.ctrlKey;
+        target.shiftKey = src.shiftKey;
+    }
 }
