@@ -113,5 +113,26 @@ namespace Autoquit2.Controllers {
             }
             return Response.Success;
         }
+
+
+        [Get("browse")]
+        public IResponse Browse(string filter) {
+            string path = null;
+            Master.Form.Invoke((MethodInvoker)(() => {
+                OpenFileDialog dialog = new OpenFileDialog();
+                dialog.CheckFileExists = true;
+                dialog.Multiselect = false;
+                dialog.RestoreDirectory = true;
+                dialog.Filter = filter;
+                var result = dialog.ShowDialog();
+                if ( result == DialogResult.OK ) {
+                    path = dialog.FileName;
+                }
+            }));
+            if ( path != null ) {
+                return Response.WithSuccess(path);
+            }
+            return Response.NoContent;
+        }
     }
 }

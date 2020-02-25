@@ -48,6 +48,7 @@ import Coord from '../../models/Coord';
 import ScriptService from '../../services/ScriptService';
 import { PlayerState } from '../../models/PlayerState';
 import { QVueGlobals, QSpinnerPuff } from 'quasar';
+import AppService from '../../services/AppService';
 
 @Component
 export default class FlexibleInput extends Vue{
@@ -104,7 +105,12 @@ export default class FlexibleInput extends Vue{
     }
 
     browse(){
-
+        AppService.openFile("Text files (*.txt)|*.txt").then(r=>{
+            if (r.data){
+                this.value= r.data;
+                this.sendInput(r.data);
+            }
+        });
     }
 
     @Emit("input")

@@ -40,7 +40,7 @@
   "action": "Action",
   "edit": "Edit",
   "active": "Active",
-  "manipulateMode": "Manipulate Mode",
+  "manipulateMode": "Send Input",
   "process": "Process",
   "subprocess": "Sub Process",
   "setcoord": "Set Coordinate",
@@ -119,5 +119,6 @@
   "tooltip_playbacklimit": "Decide when the playback automatically stop when playing.",
   "tooltip_deepscan": "Deep scan give a longer process scanning time, but may able to detect all hidden processes that are running in the background.",
   "tooltip_darkmode": "Change application theme to dark mode or light mode.",
-  "tooltip_typespeed": "Provide the delay per word when the application enter string/text automatically. This may fix some issues due to the slow response in the system."
+  "tooltip_typespeed": "Provide the delay per word when the application enter string/text automatically. This may fix some issues due to the slow response in the system.",
+  "tooltip_sendinput": "This mode will actually send the input from your keyboard instead of trying to send a message to the target handle. Toggle this on will make some problem with system key disappear, however, it requires your application stay on foreground and may take control over your inputs."
 }

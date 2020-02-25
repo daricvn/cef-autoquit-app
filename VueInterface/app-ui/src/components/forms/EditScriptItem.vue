@@ -37,6 +37,7 @@
                             </q-checkbox>
                             <q-checkbox v-model="sendInput" color="red" :label="lang.manipulateMode"
                                 :disable="!active">
+                                <q-tooltip max-width="300px" content-style="font-size: 12pt" v-if="lang">{{ lang.tooltip_sendinput }}</q-tooltip>
                             </q-checkbox>
                       </div>
                   </div>

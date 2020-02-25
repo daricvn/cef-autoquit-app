@@ -128,6 +128,7 @@ namespace CefCore
             setting.CefCommandLineArgs.Remove("process-per-tab");
             setting.CefCommandLineArgs.Add("enable-media-stream", "0");
             setting.CefCommandLineArgs.Add("disable-gpu", "1");
+            setting.CefCommandLineArgs.Add("process-per-tab", "1");
             setting.CefCommandLineArgs.Add("disable-plugins-discovery", "1");
             setting.CefCommandLineArgs.Add("disable-gpu-vsync", "1");
             setting.CefCommandLineArgs.Add("disable-extensions", "1");

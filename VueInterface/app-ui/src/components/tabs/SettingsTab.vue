@@ -5,9 +5,14 @@
         </div>
         <div class="col-auto" style="max-width:400px; overflow-x: hidden;">
             <div class="row">
-                <div class="col-auto"><span v-text="ui?ui.darkmode:'Dark Theme'"></span></div>
+                <div class="col-auto">
+                    <span v-text="ui?ui.darkmode:'Dark Theme'">
+                    </span>
+                </div>
                 <div class="col q-pl-md">
-                    <q-toggle dense :value="darkTheme" @input="onDarkThemeChanged" :disable="!settingsEditable"></q-toggle>
+                    <q-toggle dense :value="darkTheme" @input="onDarkThemeChanged" :disable="!settingsEditable">
+                        <q-tooltip v-if="ui" max-width="250px" content-style="font-size: 12pt">{{ ui.tooltip_darkmode }}</q-tooltip>
+                    </q-toggle>
                 </div>
             </div>
             <div class="row">
@@ -73,6 +78,24 @@
                         </template>
                      </q-input>
                 </div>
+            </div>
+            <div class="row q-mt-sm">
+                <div class="text-overline">{{ ui ? ui.typespeed:"Typing speed" }}:
+                    <q-tooltip v-if="ui" max-width="250px" content-style="font-size: 12pt">{{ ui.tooltip_typespeed }}</q-tooltip>
+                </div>
+                <q-separator></q-separator>
+            </div>
+            <div class="row q-pl-md q-pr-md">
+                <q-slider
+                    @input="onTypespeedChanged"
+                    :value="settings.typeSpeed"
+                    markers
+                    label
+                    :min="20"
+                    :max="200"
+                    :step="40"
+                    >
+                </q-slider>
             </div>
         </div>
     </div>
@@ -226,5 +249,12 @@ export default class SettingsTab extends Vue{
         private isDuplicatedKey(keyA?: KeyCombination, keyB?: KeyCombination): boolean {
             return !!keyA && !!keyB && keyA != keyB && KeyCombination.compare(keyA, keyB);
         }
+
+    onTypespeedChanged(value: any){
+        if (value){
+            this.settings.typeSpeed = value;
+            this.setSettings(this.settings);
+        }
+    }
 }
 </script>

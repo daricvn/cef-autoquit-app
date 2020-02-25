@@ -11,6 +11,7 @@ export class AppSettings{
         this.playHotkey = new KeyCombination();
         this.recordHotkey = new KeyCombination();
         this.topHotkey = new KeyCombination();
+        this.typeSpeed = 0;
     }
 }
 

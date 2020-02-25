@@ -24,4 +24,7 @@ export default class AppService{
     static sendEvent(name: string){
         axios.post(`${config.URL}/config/event?name=${name}`);
     }
+    static openFile(filter: string): AxiosPromise<any> {
+        return axios.get(`${config.URL}/config/browse?filter=${filter}`);
+    }
 }

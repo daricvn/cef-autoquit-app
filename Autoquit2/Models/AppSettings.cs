@@ -15,7 +15,7 @@ namespace Autoquit2.Models {
         };
         public bool ShowMouseCoordinate { get; set; } = false;
         public bool AutoMerge { get; set; } = true;
-        public int TypeSpeed { get; set; } = 10;
+        public int TypeSpeed { get; set; } = 20;
         public string Language { get; set; } = "en-US";
         public int Port { get; set; } = 7709;
         public string Version { get {

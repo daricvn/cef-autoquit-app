@@ -29,8 +29,10 @@ namespace Autoquit2.Controllers {
     public class ScriptController: Controller {
         private const string ScriptFileExtension = "Autoquit Script Files (*.script)|*.script";
         private readonly Random rnd;
+        private readonly Dictionary<string, string> fileCache;
         public ScriptController() {
             rnd = new Random();
+            fileCache = new Dictionary<string, string>();
         }
 
         [Get("processes")]
@@ -126,6 +128,7 @@ namespace Autoquit2.Controllers {
             }));
             if ( path != null ) {
                 Script script = Compressor.ReadObject<Script>(path);
+                fileCache.Clear();
                 if (script.Version == null || script.Version < Constant.Build || (
                     script.Scripts.Count>0 && 
                     script.Scripts
@@ -286,7 +289,7 @@ namespace Autoquit2.Controllers {
                         }
                     }
                     else if ( item.EventType == Constant.ENV_ENTER_TEXT || item.EventType == Constant.ENV_ENTER_SECRET
-                        || item.EventType == Constant.ENV_RANDOM_TEXT ) {
+                        || item.EventType == Constant.ENV_RANDOM_TEXT || item.EventType == Constant.ENV_FROM_FILE ) {
                         var keyName = item.KeyName;
                         if ( item.EventType == Constant.ENV_RANDOM_TEXT && keyName.Contains(";") ) {
                             var keys = keyName.Split(';');
@@ -296,12 +299,31 @@ namespace Autoquit2.Controllers {
                                 keyName = keys[rnd.Next(0, keys.Length - 1)];
                             }
                         }
+                        else if (item.EventType == Constant.ENV_FROM_FILE ) {
+                            keyName = "";
+                            if ( !fileCache.ContainsKey(item.KeyName)  ) {
+                                if ( File.Exists(item.KeyName) ) {
+                                    keyName = File.ReadAllText(item.KeyName);
+                                    fileCache.Add(item.KeyName, keyName);
+                                }
+                            }
+                            else {
+                                keyName = fileCache[item.KeyName];
+                            }
+                        }
                         Task.Run(async () => {
+                            int wordCount = 0;
                             foreach ( char c in keyName ) {
                                 WinAPI.Keys key;
                                 if ( (key = KeyMapper.Get(c, out bool shift)) != WinAPI.Keys.None ) {
+                                    wordCount++;
+                                    if ( shift && item.SendInput )
+                                        SendKey(pid, KeyType.KEY_DOWN, System.Windows.Forms.Keys.Shift, true);
                                     SendKey(pid, KeyType.KEY_PRESS, key.ToWindowsKey(), item.SendInput);
-                                    if ( Program.Settings.TypeSpeed > 0 && keyName.Length >= 50 ) {
+                                    if ( shift && item.SendInput )
+                                        SendKey(pid, KeyType.KEY_UP, System.Windows.Forms.Keys.Shift, true);
+                                    if ( Program.Settings.TypeSpeed > 0 && wordCount >= 20 ) {
+                                        wordCount = 0;
                                         await Task.Delay(Program.Settings.TypeSpeed / 2);
                                     }
                                 }
