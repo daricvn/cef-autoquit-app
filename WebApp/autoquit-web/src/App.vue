@@ -51,8 +51,8 @@
             </q-item>
           </q-list>
         </q-btn-dropdown>
-        <q-route-tab label="Download" to="/download"></q-route-tab>
-        <q-route-tab label="About" to="/about"></q-route-tab>
+        <q-route-tab label="Download" to="Download"></q-route-tab>
+        <q-route-tab label="About" to="About"></q-route-tab>
       </q-tabs>
     </q-toolbar>
 

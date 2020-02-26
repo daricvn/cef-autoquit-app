@@ -23,7 +23,9 @@ import {
   QAvatar,
   QItem,
   QItemSection,
-  QItemLabel
+  QItemLabel,
+  QMarkupTable,
+  QSlideTransition
 } from "quasar";
 
 Vue.use(Quasar, {
@@ -45,7 +47,9 @@ Vue.use(Quasar, {
     QAvatar,
     QItem,
     QItemSection,
-    QItemLabel
+    QItemLabel,
+    QMarkupTable,
+    QSlideTransition
   },
   directives: {},
   plugins: {}

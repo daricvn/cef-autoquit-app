@@ -3,21 +3,25 @@
     <div class="column">
       <div class="col text-center">
         <div>
-          <h3>
-            About Me
-            <q-icon name="perm_identity" class="on-right"></q-icon>
-          </h3>
+          <transition name="q-transition--jump-down" appear>
+            <h3 style="transition-delay: 500ms">
+              About Me
+              <q-icon name="perm_identity" class="on-right"></q-icon>
+            </h3>
+          </transition>
         </div>
       </div>
     </div>
-    <div>
-      <div class="text-h5">
-        Hi there, thank you for interesting in my software. I'm Darick, if you want to send any feedback or contact me, feel free to connect with my Social Media described as below.
+    <transition name="q-transition--jump-up" appear>
+      <div style="transition-delay: 900ms">
+        <div class="text-h5">
+          Hi there, thank you for interesting in my software. I'm Darick, if you want to send any feedback or contact me, feel free to connect with my Social Media described as below.
+        </div>
+        <div class="text-h5">
+          Love to look into the source code? Please visit my github in <router-link to="Download" class="text-blue-2"> Download section </router-link>.
+        </div>
       </div>
-      <div class="text-h5">
-        Love to look into the source code? Please visit my github in Download section.
-      </div>
-    </div>
+    </transition>
     <div class="q-pt-lg"></div>
     <div>
       <div class="row text-h5">
@@ -41,6 +45,14 @@
     </div>
   </div>
 </template>
+<script>
+import Vue from 'vue'
+import Component from 'vue-class-component';
+
+@Component
+export default class About extends Vue{
+}
+</script>
 <style scoped>
   .line-link{
     line-height: 38px;
