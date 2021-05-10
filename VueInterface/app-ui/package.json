@@ -11,7 +11,7 @@
     "@quasar/extras": "^1.0.0",
     "@types/lodash": "^4.14.149",
     "core-js": "^3.4.3",
-    "lodash": "^4.17.15",
+    "lodash": "^4.17.21",
     "quasar": "^1.0.0",
     "vue": "^2.6.10",
     "vue-class-component": "^7.0.2",
